@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crear cuenta — New Age Professional Services</title>
+<link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="brand">NEW AGE PROFESSIONAL SERVICES</div>
+    <h1>Crear cuenta</h1>
+    <p class="muted">Regístrate para entrar al portal de agentes.</p>
+    <div id="aviso-demo" class="aviso" style="display:none">Modo vista previa.</div>
+    <form id="form-registro">
+      <label>Nombre completo
+        <input type="text" id="nombre" required autocomplete="name" placeholder="Tu nombre">
+      </label>
+      <label>Correo electrónico
+        <input type="email" id="email" required autocomplete="email" placeholder="tu@correo.com">
+      </label>
+      <label>Contraseña
+        <input type="password" id="password" required autocomplete="new-password" placeholder="Mínimo 6 caracteres">
+      </label>
+      <div id="error" class="error" style="display:none"></div>
+      <button type="submit" class="btn-dorado" id="btn-crear">Crear cuenta</button>
+    </form>
+    <p class="muted small">¿Ya tienes cuenta? <a href="index.html" style="color:var(--dorado-claro)">Entra aquí</a>.</p>
+    <p class="muted small">Si no fuiste invitado por tu director, tu cuenta quedará pendiente de aprobación.</p>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script>
+  if (MODO_DEMO) document.getElementById('aviso-demo').style.display = 'block';
+  document.getElementById('form-registro').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btn-crear');
+    const err = document.getElementById('error');
+    err.style.display = 'none';
+    btn.disabled = true; btn.textContent = 'Creando…';
+    try {
+      await registrarse(
+        document.getElementById('nombre').value.trim(),
+        document.getElementById('email').value.trim(),
+        document.getElementById('password').value
+      );
+      window.location.href = 'panel.html';
+    } catch (ex) {
+      err.textContent = ex.message || 'No se pudo crear tu cuenta.';
+      err.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Crear cuenta';
+    }
+  });
+</script>
+</body>
+</html>
