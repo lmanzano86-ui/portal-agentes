@@ -17,6 +17,40 @@ const Memoria = (() => {
   };
 })();
 
+/* ---------- Registro (crear cuenta) ---------- */
+function traducirErrorAuth(msg) {
+  if (/already registered|already exists/i.test(msg)) return 'Este correo ya está registrado. Entra con tu contraseña.';
+  if (/password/i.test(msg)) return 'La contraseña debe tener al menos 6 caracteres.';
+  if (/email/i.test(msg)) return 'Revisa que el correo esté bien escrito.';
+  return 'No se pudo crear tu cuenta. Intenta de nuevo.';
+}
+
+async function registrarse(nombre, email, password) {
+  if (!nombre) throw new Error('Escribe tu nombre.');
+  if (password.length < 6) throw new Error('La contraseña debe tener al menos 6 caracteres.');
+  if (MODO_DEMO) {
+    const sesion = { id: 'demo-' + email.toLowerCase(), email, rol: 'agente', nombre };
+    Memoria.set('portal_sesion', JSON.stringify(sesion));
+    const ps = JSON.parse(Memoria.get('portal_perfiles') || '[]');
+    if (!ps.find(p => p.id === sesion.id)) {
+      ps.push({ id: sesion.id, email, nombre, rol: 'agente', activo: true, created_at: new Date().toISOString() });
+      Memoria.set('portal_perfiles', JSON.stringify(ps));
+    }
+    return sesion;
+  }
+  const { data, error } = await supa.auth.signUp({
+    email, password, options: { data: { nombre } }
+  });
+  if (error) throw new Error(traducirErrorAuth(error.message));
+  const perfil = await obtenerPerfil(data.user.id);
+  if (!perfil) throw new Error('Cuenta creada. Ahora entra con tu correo y contraseña.');
+  if (!perfil.activo) {
+    await supa.auth.signOut();
+    throw new Error('Tu cuenta quedó pendiente de aprobación. Habla con tu director.');
+  }
+  return { id: data.user.id, email, rol: perfil.rol, nombre: perfil.nombre };
+}
+
 /* ---------- Sesión ---------- */
 async function entrar(email, password) {
   if (MODO_DEMO) {
