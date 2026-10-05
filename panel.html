@@ -77,6 +77,12 @@
       <label>¿Tiene página web actualmente?
         <input type="text" id="web_actual" placeholder="Enlace, o deja en blanco si no tiene">
       </label>
+      <label>Enlace del perfil de Google *
+        <input type="url" id="google_link" required placeholder="Ej. https://maps.app.goo.gl/… o https://g.page/…">
+        <div class="muted small">Pega el enlace corto del perfil del negocio en Google. Usa "Abrir para verificar" y confirma que abre el negocio correcto antes de enviar.</div>
+        <div id="google-link-estado" class="muted small" style="margin-top:4px;min-height:1.2em"></div>
+        <button type="button" class="btn-linea" id="btn-verificar-google" style="margin-top:6px" disabled>Abrir para verificar</button>
+      </label>
       <label>Notas para el equipo de producción
         <textarea id="notas" rows="2" placeholder="Colores de marca, fotos disponibles, algo especial…"></textarea>
       </label>
@@ -227,6 +233,22 @@
     window.toggleAgente = async (id, activo) => { await cambiarActivoAgente(id, !activo); await pintarAgentes(); };
     window.revocarInv = async (id) => { await revocarInvitacion(id); await pintarAgentes(); };
 
+    /* ----- Verificación del enlace de Google ----- */
+    const gInput = document.getElementById('google_link');
+    const gEstado = document.getElementById('google-link-estado');
+    const gBtn = document.getElementById('btn-verificar-google');
+    let gUrlValida = null;
+    function chequearGoogle() {
+      const r = validarEnlaceGoogle(gInput.value);
+      gUrlValida = r.ok ? r.url : null;
+      gEstado.textContent = gInput.value.trim() ? r.msg : '';
+      gEstado.style.color = r.ok ? '#7fd67f' : '#e08a8a';
+      gBtn.disabled = !r.ok;
+      gInput.setCustomValidity(gInput.value.trim() && !r.ok ? r.msg : '');
+    }
+    gInput.addEventListener('input', chequearGoogle);
+    gBtn.addEventListener('click', () => { if (gUrlValida) window.open(gUrlValida, '_blank', 'noopener'); });
+
     document.getElementById('form-solicitud').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('btn-enviar');
@@ -237,11 +259,13 @@
         pais: v('pais'), plan_interes: v('plan'), nombre_negocio: v('nombre'),
         giro: v('giro'), direccion: v('direccion'), telefono: v('telefono'),
         horario: v('horario'), servicios: v('servicios'), instagram: v('instagram'),
-        facebook: v('facebook'), web_actual: v('web_actual'), notas: v('notas')
+        facebook: v('facebook'), web_actual: v('web_actual'), enlace_google: v('google_link'),
+        notas: v('notas')
       };
       try {
         await crearSolicitud(datos);
         e.target.reset();
+        gEstado.textContent = ''; gBtn.disabled = true; gUrlValida = null;
         await pintarLista();
         alert('Solicitud enviada. El equipo de producción la tomará de aquí.');
       } catch (ex) {
@@ -267,6 +291,7 @@
             <span class="estado estado-${esc(s.estado)}">${esc(s.estado)}</span>
           </div>
           <div class="muted small">${esc(s.giro || '')} · ${esc(s.pais || '')} · ${esc(s.telefono || '')}</div>
+          ${s.enlace_google ? `<div class="muted small"><a href="${esc(s.enlace_google)}" target="_blank" rel="noopener" style="color:var(--dorado-claro)">Ver perfil en Google</a></div>` : ''}
           ${s.agente_nombre ? `<div class="muted small">Agente: ${esc(s.agente_nombre)}</div>` : ''}
           <div class="muted small">${new Date(s.created_at).toLocaleString('es')}</div>
         </div>`).join('');
