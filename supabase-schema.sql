@@ -26,6 +26,7 @@ create table solicitudes (
   instagram text,
   facebook text,
   web_actual text,
+  enlace_google text,
   plan_interes text,
   notas text,
   estado text not null default 'nueva'
