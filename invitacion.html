@@ -12,6 +12,7 @@
     <div class="brand">NEW AGE PROFESSIONAL SERVICES</div>
     <h1 id="titulo">Crear tu cuenta</h1>
     <p class="muted" id="subtitulo">Verificando tu invitación…</p>
+    <p class="muted small" id="datos-inv" style="display:none"></p>
     <div id="aviso-demo" class="aviso" style="display:none">Modo vista previa.</div>
     <form id="form-invitacion" style="display:none">
       <label>Crea tu contraseña
@@ -39,6 +40,9 @@
     if (!inv) { sub.textContent = 'Esta invitación no existe o ya fue utilizada.'; return; }
     document.getElementById('titulo').textContent = 'Hola, ' + inv.nombre;
     sub.textContent = 'Crea tu contraseña para entrar al portal como ' + inv.rol + '.';
+    const datosEl = document.getElementById('datos-inv');
+    datosEl.textContent = 'País: ' + (inv.pais || '—') + ' · Comisión: ' + (inv.comision_pct != null ? inv.comision_pct + '%' : '—');
+    datosEl.style.display = 'block';
     document.getElementById('form-invitacion').style.display = 'block';
 
     document.getElementById('form-invitacion').addEventListener('submit', async (e) => {
