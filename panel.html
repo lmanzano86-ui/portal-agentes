@@ -82,6 +82,11 @@
         <div class="muted small">Pega el enlace corto del perfil del negocio en Google. Usa "Abrir para verificar" y confirma que abre el negocio correcto antes de enviar.</div>
         <div id="google-link-estado" class="muted small" style="margin-top:4px;min-height:1.2em"></div>
         <button type="button" class="btn-linea" id="btn-verificar-google" style="margin-top:6px" disabled>Abrir para verificar</button>
+        <div id="google-preview" style="display:none;margin-top:8px">
+          <div class="muted small">Vista previa del enlace:</div>
+          <img id="google-preview-img" alt="Vista previa del perfil de Google" style="display:none;max-width:100%;border-radius:8px;border:1px solid var(--borde);margin-top:4px">
+          <div id="google-preview-cargando" class="muted small" style="margin-top:4px">Generando vista previa…</div>
+        </div>
       </label>
       <label>Notas para el equipo de producción
         <textarea id="notas" rows="2" placeholder="Colores de marca, fotos disponibles, algo especial…"></textarea>
@@ -237,7 +242,11 @@
     const gInput = document.getElementById('google_link');
     const gEstado = document.getElementById('google-link-estado');
     const gBtn = document.getElementById('btn-verificar-google');
+    const gPrevBox = document.getElementById('google-preview');
+    const gPrevImg = document.getElementById('google-preview-img');
+    const gPrevCarg = document.getElementById('google-preview-cargando');
     let gUrlValida = null;
+    let gPrevTimer = null;
     function chequearGoogle() {
       const r = validarEnlaceGoogle(gInput.value);
       gUrlValida = r.ok ? r.url : null;
@@ -245,6 +254,32 @@
       gEstado.style.color = r.ok ? '#7fd67f' : '#e08a8a';
       gBtn.disabled = !r.ok;
       gInput.setCustomValidity(gInput.value.trim() && !r.ok ? r.msg : '');
+      clearTimeout(gPrevTimer);
+      if (r.ok) {
+        gPrevTimer = setTimeout(() => generarPreview(r.url), 900);
+      } else {
+        gPrevBox.style.display = 'none';
+        gPrevImg.removeAttribute('src');
+      }
+    }
+    async function generarPreview(url) {
+      gPrevBox.style.display = 'block';
+      gPrevImg.style.display = 'none';
+      gPrevImg.removeAttribute('src');
+      gPrevCarg.style.display = 'block';
+      gPrevCarg.textContent = 'Generando vista previa…';
+      try {
+        const resp = await fetch('https://api.microlink.io/?url=' + encodeURIComponent(url) + '&screenshot=true&meta=false');
+        const j = await resp.json();
+        const ss = j && j.data && j.data.screenshot && j.data.screenshot.url;
+        if (!ss) throw new Error('sin imagen');
+        if (gUrlValida !== url) return; // el usuario ya cambió el enlace
+        gPrevImg.onload = () => { gPrevImg.style.display = 'block'; gPrevCarg.style.display = 'none'; };
+        gPrevImg.onerror = () => { gPrevBox.style.display = 'none'; };
+        gPrevImg.src = ss;
+      } catch (e) {
+        gPrevBox.style.display = 'none'; // si falla, queda el botón "Abrir para verificar"
+      }
     }
     gInput.addEventListener('input', chequearGoogle);
     gBtn.addEventListener('click', () => { if (gUrlValida) window.open(gUrlValida, '_blank', 'noopener'); });
@@ -266,6 +301,7 @@
         await crearSolicitud(datos);
         e.target.reset();
         gEstado.textContent = ''; gBtn.disabled = true; gUrlValida = null;
+        clearTimeout(gPrevTimer); gPrevBox.style.display = 'none'; gPrevImg.removeAttribute('src');
         await pintarLista();
         alert('Solicitud enviada. El equipo de producción la tomará de aquí.');
       } catch (ex) {
