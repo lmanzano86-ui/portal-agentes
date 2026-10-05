@@ -32,11 +32,12 @@ permisos. Sin SQL, sin dashboard.
 
 ## Cómo se crean los agentes (lo hace Lester desde el portal)
 
-1. En el panel, sección **Agentes** → llena nombre, correo y rol → "Crear invitación".
+1. En el panel, sección **Agentes** → llena nombre, correo, rol, **país donde trabaja** y **% de comisión** → "Crear invitación".
 2. El portal genera un enlace único. Lester se lo envía al agente por WhatsApp.
-3. El agente abre el enlace, crea su contraseña y entra. Listo.
-4. Para desactivar a alguien: botón "Desactivar" en su tarjeta.
-5. Para revocar una invitación sin usar: botón "Revocar".
+3. El agente abre el enlace, ve su país y su comisión asignados, crea su contraseña y entra. Listo.
+4. El país del agente queda bloqueado en el formulario de solicitudes: no lo puede cambiar.
+5. Para desactivar a alguien: botón "Desactivar" en su tarjeta.
+6. Para revocar una invitación sin usar: botón "Revocar".
 
 ## Roles
 
