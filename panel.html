@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel del Agente — New Age Professional Services</title>
+<link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">NEW AGE PROFESSIONAL SERVICES</div>
+  <div class="userbox">
+    <span id="nombre-agente"></span>
+    <span id="rol-agente" class="rol"></span>
+    <button id="btn-salir" class="btn-linea">Salir</button>
+  </div>
+</header>
+
+<main class="contenedor">
+  <div id="aviso-demo" class="aviso" style="display:none">
+    Modo vista previa: los datos se guardan solo en este navegador.
+  </div>
+
+  <section class="tarjeta">
+    <h2>Nueva solicitud</h2>
+    <p class="muted">Llena los datos del negocio. Con esto se genera la página demo, la propuesta de precios y el contrato.</p>
+    <form id="form-solicitud">
+      <div class="fila">
+        <label>País *
+          <select id="pais" required>
+            <option value="">Selecciona…</option>
+            <option>Estados Unidos</option>
+            <option>España</option>
+            <option>Brasil</option>
+            <option>Países Bajos</option>
+          </select>
+        </label>
+        <label>Plan de interés
+          <select id="plan">
+            <option value="">Sin definir</option>
+            <option>Lanzamiento</option>
+            <option>Profesional</option>
+            <option>Sin Entrada</option>
+          </select>
+        </label>
+      </div>
+      <div class="fila">
+        <label>Nombre del negocio *
+          <input type="text" id="nombre" required placeholder="Ej. Taquería El Faro">
+        </label>
+        <label>Giro / tipo de negocio *
+          <input type="text" id="giro" required placeholder="Ej. Restaurante mexicano">
+        </label>
+      </div>
+      <label>Dirección *
+        <input type="text" id="direccion" required placeholder="Calle, número, ciudad">
+      </label>
+      <div class="fila">
+        <label>Teléfono / WhatsApp *
+          <input type="tel" id="telefono" required placeholder="+1 …">
+        </label>
+        <label>Horario
+          <input type="text" id="horario" placeholder="Ej. Lun–Sáb 9am–8pm">
+        </label>
+      </div>
+      <label>Servicios o productos principales
+        <textarea id="servicios" rows="2" placeholder="Lo que más vende el negocio…"></textarea>
+      </label>
+      <div class="fila">
+        <label>Instagram
+          <input type="text" id="instagram" placeholder="@negocio">
+        </label>
+        <label>Facebook
+          <input type="text" id="facebook" placeholder="Enlace o nombre">
+        </label>
+      </div>
+      <label>¿Tiene página web actualmente?
+        <input type="text" id="web_actual" placeholder="Enlace, o deja en blanco si no tiene">
+      </label>
+      <label>Notas para el equipo de producción
+        <textarea id="notas" rows="2" placeholder="Colores de marca, fotos disponibles, algo especial…"></textarea>
+      </label>
+      <div id="error-form" class="error" style="display:none"></div>
+      <button type="submit" class="btn-dorado" id="btn-enviar">Enviar solicitud</button>
+    </form>
+  </section>
+
+  <section class="tarjeta" id="seccion-agentes" style="display:none">
+    <h2>Agentes</h2>
+    <p class="muted">Crea cuentas para tu equipo. Cada agente recibe un enlace para crear su contraseña.</p>
+    <form id="form-invitacion">
+      <div class="fila">
+        <label>Nombre del agente *
+          <input type="text" id="inv-nombre" required placeholder="Ej. María López">
+        </label>
+        <label>Correo electrónico *
+          <input type="email" id="inv-email" required placeholder="maria@correo.com">
+        </label>
+      </div>
+      <div class="fila">
+        <label>Rol
+          <select id="inv-rol">
+            <option value="agente">Agente</option>
+            <option value="director">Director</option>
+          </select>
+        </label>
+        <div></div>
+      </div>
+      <div id="error-inv" class="error" style="display:none"></div>
+      <button type="submit" class="btn-dorado" id="btn-invitar">Crear invitación</button>
+    </form>
+    <div id="link-invitacion" class="aviso" style="display:none"></div>
+    <h3>Equipo</h3>
+    <div id="lista-agentes" class="lista"></div>
+    <h3>Invitaciones pendientes</h3>
+    <div id="lista-invitaciones" class="lista"></div>
+  </section>
+
+  <section class="tarjeta">
+    <h2 id="titulo-lista">Mis solicitudes</h2>
+    <div id="lista" class="lista"></div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script>
+  (async () => {
+    if (MODO_DEMO) document.getElementById('aviso-demo').style.display = 'block';
+    const sesion = await sesionActual();
+    if (!sesion) { window.location.href = 'index.html'; return; }
+    document.getElementById('nombre-agente').textContent = sesion.nombre;
+    const rolEl = document.getElementById('rol-agente');
+    rolEl.textContent = sesion.rol;
+    if (sesion.rol !== 'agente') {
+      document.getElementById('titulo-lista').textContent = 'Todas las solicitudes';
+      rolEl.classList.add('rol-admin');
+      document.getElementById('seccion-agentes').style.display = 'block';
+      await pintarAgentes();
+    }
+    document.getElementById('btn-salir').onclick = async () => { await salir(); window.location.href = 'index.html'; };
+    await pintarLista();
+
+    /* ----- Gestión de agentes (admin/director) ----- */
+    document.getElementById('form-invitacion').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const err = document.getElementById('error-inv');
+      const box = document.getElementById('link-invitacion');
+      err.style.display = 'none'; box.style.display = 'none';
+      try {
+        const token = await crearInvitacion(
+          document.getElementById('inv-nombre').value.trim(),
+          document.getElementById('inv-email').value.trim(),
+          document.getElementById('inv-rol').value
+        );
+        const link = enlaceInvitacion(token);
+        box.innerHTML = 'Enlace para <b>' + esc(document.getElementById('inv-nombre').value.trim()) + '</b>:<br>' +
+          '<a href="' + link + '" style="color:var(--dorado-claro);word-break:break-all">' + link + '</a><br>' +
+          '<button type="button" class="btn-linea" id="btn-copiar" style="margin-top:8px">Copiar enlace</button>';
+        box.style.display = 'block';
+        document.getElementById('btn-copiar').onclick = async () => {
+          try { await navigator.clipboard.writeText(link); }
+          catch (e) { window.prompt('Copia el enlace:', link); }
+        };
+        e.target.reset();
+        await pintarAgentes();
+      } catch (ex) {
+        err.textContent = ex.message || 'No se pudo crear la invitación.';
+        err.style.display = 'block';
+      }
+    });
+
+    async function pintarAgentes() {
+      const sesion = await sesionActual();
+      const lag = document.getElementById('lista-agentes');
+      const agentes = await listarAgentes();
+      lag.innerHTML = agentes.length ? agentes.map(a => `
+        <div class="solicitud">
+          <div class="sol-head">
+            <strong>${esc(a.nombre)}</strong>
+            <span class="estado ${a.activo ? '' : 'estado-publicada'}">${a.activo ? esc(a.rol) : 'inactivo'}</span>
+          </div>
+          <div class="muted small">${esc(a.email || '')}</div>
+          ${a.id !== sesion.id ? `<button class="btn-linea" style="margin-top:8px" onclick="toggleAgente('${a.id}', ${a.activo})">${a.activo ? 'Desactivar' : 'Activar'}</button>` : '<div class="muted small">Tú</div>'}
+        </div>`).join('') : '<p class="muted">Aún no hay agentes.</p>';
+
+      const linv = document.getElementById('lista-invitaciones');
+      const invs = await listarInvitaciones();
+      linv.innerHTML = invs.length ? invs.map(i => `
+        <div class="solicitud">
+          <div class="sol-head">
+            <strong>${esc(i.nombre)}</strong>
+            <button class="btn-linea" onclick="revocarInv('${i.id}')">Revocar</button>
+          </div>
+          <div class="muted small">${esc(i.email)} · ${esc(i.rol)}</div>
+          <div class="muted small" style="word-break:break-all">${enlaceInvitacion(i.token)}</div>
+        </div>`).join('') : '<p class="muted">No hay invitaciones pendientes.</p>';
+    }
+
+    window.toggleAgente = async (id, activo) => { await cambiarActivoAgente(id, !activo); await pintarAgentes(); };
+    window.revocarInv = async (id) => { await revocarInvitacion(id); await pintarAgentes(); };
+
+    document.getElementById('form-solicitud').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btn-enviar');
+      const err = document.getElementById('error-form');
+      err.style.display = 'none';
+      btn.disabled = true; btn.textContent = 'Enviando…';
+      const datos = {
+        pais: v('pais'), plan_interes: v('plan'), nombre_negocio: v('nombre'),
+        giro: v('giro'), direccion: v('direccion'), telefono: v('telefono'),
+        horario: v('horario'), servicios: v('servicios'), instagram: v('instagram'),
+        facebook: v('facebook'), web_actual: v('web_actual'), notas: v('notas')
+      };
+      try {
+        await crearSolicitud(datos);
+        e.target.reset();
+        await pintarLista();
+        alert('Solicitud enviada. El equipo de producción la tomará de aquí.');
+      } catch (ex) {
+        err.textContent = ex.message || 'No se pudo enviar.';
+        err.style.display = 'block';
+      }
+      btn.disabled = false; btn.textContent = 'Enviar solicitud';
+    });
+
+    function v(id) { return document.getElementById(id).value.trim(); }
+
+    async function pintarLista() {
+      const lista = document.getElementById('lista');
+      const items = await listarSolicitudes();
+      if (!items.length) {
+        lista.innerHTML = '<p class="muted">Aún no hay solicitudes.</p>';
+        return;
+      }
+      lista.innerHTML = items.map(s => `
+        <div class="solicitud">
+          <div class="sol-head">
+            <strong>${esc(s.nombre_negocio)}</strong>
+            <span class="estado estado-${esc(s.estado)}">${esc(s.estado)}</span>
+          </div>
+          <div class="muted small">${esc(s.giro || '')} · ${esc(s.pais || '')} · ${esc(s.telefono || '')}</div>
+          ${s.agente_nombre ? `<div class="muted small">Agente: ${esc(s.agente_nombre)}</div>` : ''}
+          <div class="muted small">${new Date(s.created_at).toLocaleString('es')}</div>
+        </div>`).join('');
+    }
+    function esc(t) { return String(t ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+  })();
+</script>
+</body>
+</html>

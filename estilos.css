@@ -1,0 +1,173 @@
+/* Portal de Agentes — New Age Professional Services */
+:root {
+  --dorado: #C9A227;
+  --dorado-claro: #E8C766;
+  --oscuro: #141414;
+  --tarjeta: #1E1E1E;
+  --texto: #EDEDED;
+  --muted: #9A9A9A;
+  --borde: #2C2C2C;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  background: var(--oscuro);
+  color: var(--texto);
+  min-height: 100vh;
+}
+.brand {
+  color: var(--dorado);
+  font-weight: 700;
+  letter-spacing: 1px;
+  font-size: 12px;
+}
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+
+/* Login */
+.login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.login-card {
+  background: var(--tarjeta);
+  border: 1px solid var(--dorado);
+  border-radius: 14px;
+  padding: 36px 32px;
+  width: 100%;
+  max-width: 400px;
+}
+.login-card h1 { margin: 10px 0 6px; font-size: 26px; }
+.login-card p { margin: 0 0 18px; }
+
+/* Formulario */
+label {
+  display: block;
+  margin: 12px 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+input, select, textarea {
+  width: 100%;
+  margin-top: 6px;
+  padding: 11px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--borde);
+  background: #111;
+  color: var(--texto);
+  font-size: 15px;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--dorado);
+}
+textarea { resize: vertical; }
+.fila { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 600px) { .fila { grid-template-columns: 1fr; } }
+
+/* Botones */
+.btn-dorado {
+  width: 100%;
+  margin-top: 14px;
+  padding: 13px;
+  border: none;
+  border-radius: 8px;
+  background: var(--dorado);
+  color: #141414;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-dorado:disabled { opacity: .6; cursor: default; }
+.btn-linea {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--dorado);
+  background: transparent;
+  color: var(--dorado);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Avisos y errores */
+.aviso {
+  background: #2A230F;
+  border: 1px solid var(--dorado);
+  color: var(--dorado-claro);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+.error {
+  background: #3A1414;
+  border: 1px solid #C0392B;
+  color: #F5B7B1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  margin: 10px 0;
+}
+
+/* Panel */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--borde);
+  position: sticky;
+  top: 0;
+  background: var(--oscuro);
+  z-index: 10;
+}
+.userbox { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.rol {
+  background: #2A230F;
+  color: var(--dorado-claro);
+  border: 1px solid var(--dorado);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.rol-admin { background: var(--dorado); color: #141414; }
+.contenedor { max-width: 760px; margin: 0 auto; padding: 20px; }
+.tarjeta {
+  background: var(--tarjeta);
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.tarjeta h2 { margin: 0 0 4px; font-size: 20px; }
+.lista { display: grid; gap: 10px; margin-top: 12px; }
+.solicitud {
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #181818;
+}
+.sol-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.estado {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--dorado);
+  color: var(--dorado-claro);
+  white-space: nowrap;
+}
+.estado-publicada { background: #1E3A1E; border-color: #2ECC71; color: #A9DFBF; }
