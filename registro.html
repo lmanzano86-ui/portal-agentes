@@ -13,7 +13,10 @@
     <h1>Crear cuenta</h1>
     <p class="muted">Regístrate para entrar al portal de agentes.</p>
     <div id="aviso-demo" class="aviso" style="display:none">Modo vista previa.</div>
-    <form id="form-registro">
+    <div id="aviso-cerrado" class="aviso" style="display:none">
+      El registro directo está cerrado. Pídele a tu director tu enlace de invitación.
+    </div>
+    <form id="form-registro" style="display:none">
       <label>Nombre completo
         <input type="text" id="nombre" required autocomplete="name" placeholder="Tu nombre">
       </label>
@@ -34,7 +37,25 @@
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
 <script>
-  if (MODO_DEMO) document.getElementById('aviso-demo').style.display = 'block';
+  (async () => {
+    if (MODO_DEMO) document.getElementById('aviso-demo').style.display = 'block';
+    // El registro directo solo funciona si aún no hay administrador (Lester).
+    // Después se cierra: los demás entran únicamente por invitación.
+    let cerrado = false;
+    if (!MODO_DEMO) {
+      try {
+        const { data } = await supa.rpc('hay_admin');
+        cerrado = data === true;
+      } catch (e) { cerrado = false; }
+    }
+    if (cerrado) {
+      document.getElementById('titulo').textContent = 'Registro por invitación';
+      document.getElementById('subtitulo').textContent = 'El registro directo está cerrado.';
+      document.getElementById('aviso-cerrado').style.display = 'block';
+      return;
+    }
+    document.getElementById('form-registro').style.display = 'block';
+  })();
   document.getElementById('form-registro').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('btn-crear');
