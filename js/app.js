@@ -212,9 +212,31 @@ async function aceptarInvitacion(token, password) {
 }
 
 /* ---------- Solicitudes ---------- */
+
+/* Valida que sea un enlace de Google (Maps o perfil del negocio). */
+function validarEnlaceGoogle(url) {
+  const u = String(url || '').trim();
+  if (!u) return { ok: false, msg: 'Pega el enlace del perfil de Google del negocio.' };
+  let p;
+  try { p = new URL(u); }
+  catch (e) { return { ok: false, msg: 'No parece un enlace válido. Pégalo completo, con https://' }; }
+  if (!/^https?:$/.test(p.protocol)) return { ok: false, msg: 'El enlace debe empezar con https://' };
+  const host = p.hostname.toLowerCase();
+  const esGoogle = /(^|\.)google\.com$/.test(host) || /(^|\.)goo\.gl$/.test(host) ||
+    host === 'g.page' || /(^|\.)g\.page$/.test(host) || host === 'maps.app.goo.gl';
+  if (!esGoogle) return { ok: false, msg: 'Debe ser un enlace de Google (Maps o perfil del negocio).' };
+  if (/google\.com$/.test(host) && !/^(maps|www)\./.test(host) && !p.pathname.startsWith('/maps')) {
+    return { ok: false, msg: 'Debe ser un enlace de Google Maps o del perfil del negocio.' };
+  }
+  return { ok: true, msg: '✓ Enlace válido.', url: p.href };
+}
+
 async function crearSolicitud(datos) {
   const sesion = await sesionActual();
   if (!sesion) throw new Error('Sesión vencida. Entra de nuevo.');
+  const vGoogle = validarEnlaceGoogle(datos.enlace_google);
+  if (!vGoogle.ok) throw new Error(vGoogle.msg);
+  datos.enlace_google = vGoogle.url;
   const fila = { ...datos, agente_id: sesion.id, agente_nombre: sesion.nombre, estado: 'nueva', created_at: new Date().toISOString() };
   if (MODO_DEMO) {
     const todas = JSON.parse(Memoria.get('portal_solicitudes') || '[]');
@@ -227,7 +249,7 @@ async function crearSolicitud(datos) {
     agente_id: sesion.id, pais: datos.pais, nombre_negocio: datos.nombre_negocio,
     giro: datos.giro, direccion: datos.direccion, telefono: datos.telefono,
     horario: datos.horario, servicios: datos.servicios, instagram: datos.instagram,
-    facebook: datos.facebook, web_actual: datos.web_actual,
+    facebook: datos.facebook, web_actual: datos.web_actual, enlace_google: datos.enlace_google,
     plan_interes: datos.plan_interes, notas: datos.notas, estado: 'nueva'
   });
   if (error) throw new Error('No se pudo guardar. Intenta de nuevo.');
