@@ -80,7 +80,7 @@ async function entrar(email, password) {
     await supa.auth.signOut();
     throw new Error('Tu cuenta está desactivada. Habla con tu director.');
   }
-  return { id: data.user.id, email, rol: perfil.rol, nombre: perfil.nombre };
+  return { id: data.user.id, email, rol: perfil.rol, nombre: perfil.nombre, pais: perfil.pais || null, comision_pct: perfil.comision_pct };
 }
 
 async function sesionActual() {
@@ -92,7 +92,7 @@ async function sesionActual() {
   if (!data.session) return null;
   const perfil = await obtenerPerfil(data.session.user.id);
   if (!perfil || !perfil.activo) { await supa.auth.signOut(); return null; }
-  return { id: data.session.user.id, email: data.session.user.email, rol: perfil.rol, nombre: perfil.nombre };
+  return { id: data.session.user.id, email: data.session.user.email, rol: perfil.rol, nombre: perfil.nombre, pais: perfil.pais || null, comision_pct: perfil.comision_pct };
 }
 
 async function salir() {
@@ -101,25 +101,30 @@ async function salir() {
 }
 
 async function obtenerPerfil(uid) {
-  const { data } = await supa.from('perfiles').select('nombre, rol, activo').eq('id', uid).single();
+  const { data } = await supa.from('perfiles').select('nombre, rol, activo, pais, comision_pct').eq('id', uid).single();
   return data;
 }
 
 /* ---------- Agentes e invitaciones (admin/director) ---------- */
 function esAdmin(sesion) { return sesion && (sesion.rol === 'admin' || sesion.rol === 'director'); }
 
-async function crearInvitacion(nombre, email, rol) {
+async function crearInvitacion(nombre, email, rol, pais, comision_pct) {
   const sesion = await sesionActual();
   if (!esAdmin(sesion)) throw new Error('Solo el administrador puede invitar agentes.');
+  if (!pais) throw new Error('Selecciona el país donde trabajará el agente.');
+  comision_pct = Number(comision_pct);
+  if (!isFinite(comision_pct) || comision_pct < 0 || comision_pct > 100) {
+    throw new Error('La comisión debe ser un porcentaje entre 0 y 100.');
+  }
   const token = (crypto.randomUUID ? crypto.randomUUID() : 't' + Date.now() + Math.random().toString(16).slice(2));
   if (MODO_DEMO) {
     const invs = JSON.parse(Memoria.get('portal_invitaciones') || '[]');
-    invs.unshift({ id: 'i' + Date.now(), email: email.toLowerCase(), nombre, rol, token, usada: false, created_at: new Date().toISOString() });
+    invs.unshift({ id: 'i' + Date.now(), email: email.toLowerCase(), nombre, rol, pais, comision_pct, token, usada: false, created_at: new Date().toISOString() });
     Memoria.set('portal_invitaciones', JSON.stringify(invs));
     return token;
   }
   const { error } = await supa.from('invitaciones').insert({
-    email: email.toLowerCase(), nombre, rol, token, creada_por: sesion.id
+    email: email.toLowerCase(), nombre, rol, pais, comision_pct, token, creada_por: sesion.id
   });
   if (error) throw new Error('No se pudo crear la invitación.');
   return token;
@@ -134,7 +139,7 @@ async function listarAgentes() {
   if (MODO_DEMO) {
     return JSON.parse(Memoria.get('portal_perfiles') || '[]');
   }
-  const { data } = await supa.from('perfiles').select('id, nombre, rol, activo, created_at').order('created_at');
+  const { data } = await supa.from('perfiles').select('id, nombre, rol, activo, pais, comision_pct, created_at').order('created_at');
   return data || [];
 }
 
@@ -155,7 +160,7 @@ async function listarInvitaciones() {
   if (MODO_DEMO) {
     return (JSON.parse(Memoria.get('portal_invitaciones') || '[]')).filter(i => !i.usada);
   }
-  const { data } = await supa.from('invitaciones').select('id, email, nombre, rol, token, created_at').eq('usada', false).order('created_at', { ascending: false });
+  const { data } = await supa.from('invitaciones').select('id, email, nombre, rol, pais, comision_pct, token, created_at').eq('usada', false).order('created_at', { ascending: false });
   return data || [];
 }
 
@@ -175,7 +180,7 @@ async function validarInvitacion(token) {
   if (MODO_DEMO) {
     const inv = (JSON.parse(Memoria.get('portal_invitaciones') || '[]'))
       .find(i => i.token === token && !i.usada);
-    return inv ? { email: inv.email, nombre: inv.nombre, rol: inv.rol } : null;
+    return inv ? { email: inv.email, nombre: inv.nombre, rol: inv.rol, pais: inv.pais || null, comision_pct: inv.comision_pct } : null;
   }
   const { data } = await supa.rpc('validar_invitacion', { p_token: token });
   return (data && data[0]) || null;
@@ -191,10 +196,10 @@ async function aceptarInvitacion(token, password) {
     invs[ix].usada = true;
     Memoria.set('portal_invitaciones', JSON.stringify(invs));
     const ps = JSON.parse(Memoria.get('portal_perfiles') || '[]');
-    const perfil = { id: 'demo-' + inv.email, email: inv.email, nombre: inv.nombre, rol: inv.rol, activo: true, created_at: new Date().toISOString() };
+    const perfil = { id: 'demo-' + inv.email, email: inv.email, nombre: inv.nombre, rol: inv.rol, pais: inv.pais || null, comision_pct: inv.comision_pct, activo: true, created_at: new Date().toISOString() };
     ps.push(perfil);
     Memoria.set('portal_perfiles', JSON.stringify(ps));
-    Memoria.set('portal_sesion', JSON.stringify({ id: perfil.id, email: perfil.email, nombre: perfil.nombre, rol: perfil.rol }));
+    Memoria.set('portal_sesion', JSON.stringify({ id: perfil.id, email: perfil.email, nombre: perfil.nombre, rol: perfil.rol, pais: perfil.pais, comision_pct: perfil.comision_pct }));
     return perfil;
   }
   const { data, error } = await supa.auth.signUp({
