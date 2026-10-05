@@ -49,3 +49,9 @@ permisos. Sin SQL, sin dashboard.
 
 Cada solicitud guarda `agente_id` y `created_at`: con eso se calcula
 automáticamente el nivel de comisión del mes (35/40/45/50%) sin trabajo manual.
+
+## Migración en base existente (2026-10-05)
+
+Si la base ya tenía datos, ejecutar `migracion-2026-10-05.sql` en el SQL Editor
+(agrega `pais` y `comision_pct` a perfiles e invitaciones). Si da error 42P13,
+anteponer: `drop function if exists public.validar_invitacion(text);`
