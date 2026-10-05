@@ -106,6 +106,20 @@
         </label>
         <div></div>
       </div>
+      <div class="fila">
+        <label>País donde trabaja *
+          <select id="inv-pais" required>
+            <option value="">Selecciona…</option>
+            <option>Estados Unidos</option>
+            <option>España</option>
+            <option>Brasil</option>
+            <option>Países Bajos</option>
+          </select>
+        </label>
+        <label>Comisión % *
+          <input type="number" id="inv-comision" required min="0" max="100" step="0.5" placeholder="Ej. 35">
+        </label>
+      </div>
       <div id="error-inv" class="error" style="display:none"></div>
       <button type="submit" class="btn-dorado" id="btn-invitar">Crear invitación</button>
     </form>
@@ -133,6 +147,16 @@
     document.getElementById('nombre-agente').textContent = sesion.nombre;
     const rolEl = document.getElementById('rol-agente');
     rolEl.textContent = sesion.rol;
+    /* País bloqueado: el agente no lo selecciona; viene de su invitación. */
+    const paisSel = document.getElementById('pais');
+    if (sesion.pais) {
+      paisSel.value = sesion.pais;
+      paisSel.disabled = true;
+      const nota = document.createElement('div');
+      nota.className = 'muted small';
+      nota.textContent = 'País asignado por tu director — no se puede cambiar.';
+      paisSel.closest('label').appendChild(nota);
+    }
     if (sesion.rol !== 'agente') {
       document.getElementById('titulo-lista').textContent = 'Todas las solicitudes';
       rolEl.classList.add('rol-admin');
@@ -152,7 +176,9 @@
         const token = await crearInvitacion(
           document.getElementById('inv-nombre').value.trim(),
           document.getElementById('inv-email').value.trim(),
-          document.getElementById('inv-rol').value
+          document.getElementById('inv-rol').value,
+          document.getElementById('inv-pais').value,
+          document.getElementById('inv-comision').value
         );
         const link = enlaceInvitacion(token);
         box.innerHTML = 'Enlace para <b>' + esc(document.getElementById('inv-nombre').value.trim()) + '</b>:<br>' +
@@ -181,7 +207,7 @@
             <strong>${esc(a.nombre)}</strong>
             <span class="estado ${a.activo ? '' : 'estado-publicada'}">${a.activo ? esc(a.rol) : 'inactivo'}</span>
           </div>
-          <div class="muted small">${esc(a.email || '')}</div>
+          <div class="muted small">${esc(a.email || '')}${a.pais ? ' · ' + esc(a.pais) : ''}${a.comision_pct != null ? ' · Comisión ' + esc(a.comision_pct) + '%' : ''}</div>
           ${a.id !== sesion.id ? `<button class="btn-linea" style="margin-top:8px" onclick="toggleAgente('${a.id}', ${a.activo})">${a.activo ? 'Desactivar' : 'Activar'}</button>` : '<div class="muted small">Tú</div>'}
         </div>`).join('') : '<p class="muted">Aún no hay agentes.</p>';
 
@@ -193,7 +219,7 @@
             <strong>${esc(i.nombre)}</strong>
             <button class="btn-linea" onclick="revocarInv('${i.id}')">Revocar</button>
           </div>
-          <div class="muted small">${esc(i.email)} · ${esc(i.rol)}</div>
+          <div class="muted small">${esc(i.email)} · ${esc(i.rol)}${i.pais ? ' · ' + esc(i.pais) : ''}${i.comision_pct != null ? ' · Comisión ' + esc(i.comision_pct) + '%' : ''}</div>
           <div class="muted small" style="word-break:break-all">${enlaceInvitacion(i.token)}</div>
         </div>`).join('') : '<p class="muted">No hay invitaciones pendientes.</p>';
     }
