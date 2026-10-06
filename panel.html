@@ -153,6 +153,11 @@
     <div id="lista-agentes" class="lista"></div>
     <h3>Invitaciones pendientes</h3>
     <div id="lista-invitaciones" class="lista"></div>
+    <div id="seccion-sistema" style="display:none">
+      <h3>Usuarios de sistema</h3>
+      <p class="muted">Cuentas técnicas del portal (no son agentes). Solo visibles para ti.</p>
+      <div id="lista-sistema" class="lista"></div>
+    </div>
   </section>
 
   <section class="tarjeta">
@@ -193,6 +198,7 @@
       rolEl.classList.add('rol-admin');
       document.getElementById('seccion-agentes').style.display = 'block';
       await pintarAgentes();
+      await pintarSistema(sesion);
     }
     document.getElementById('btn-salir').onclick = async () => { await salir(); window.location.href = 'index.html'; };
     await pintarLista();
@@ -258,6 +264,39 @@
 
     window.toggleAgente = async (id, activo) => { await cambiarActivoAgente(id, !activo); await pintarAgentes(); };
     window.revocarInv = async (id) => { await revocarInvitacion(id); await pintarAgentes(); };
+
+    /* ----- Usuarios de sistema (solo la cuenta de Lester) ----- */
+    async function pintarSistema(sesion) {
+      const sec = document.getElementById('seccion-sistema');
+      if (!sesion || sesion.id !== ID_LESTER) return;
+      sec.style.display = 'block';
+      const box = document.getElementById('lista-sistema');
+      try {
+        const us = await listarUsuariosSistema();
+        box.innerHTML = us.length ? us.map(u => {
+          const enUso = u.email === EMAIL_SISTEMA_EN_USO;
+          return `<div class="solicitud">
+            <div class="sol-head">
+              <strong>${esc(u.nombre || u.email)}</strong>
+              ${enUso ? '<span class="estado">en uso</span>' : `<button class="btn-linea" onclick="eliminarSistema('${u.id}', '${esc(u.email)}')">Eliminar</button>`}
+            </div>
+            <div class="muted small">${esc(u.email)}${enUso ? ' · lo usa el detector automático — no eliminar' : ''}</div>
+          </div>`;
+        }).join('') : '<p class="muted">No hay usuarios de sistema.</p>';
+      } catch (e) {
+        box.innerHTML = '<p class="muted">No se pudieron cargar.</p>';
+      }
+    }
+    window.eliminarSistema = async (id, email) => {
+      if (!window.confirm(`¿Eliminar el usuario de sistema ${email}? Esta acción no se puede deshacer.`)) return;
+      try {
+        await eliminarUsuarioSistema(id);
+        const sesion = await sesionActual();
+        await pintarSistema(sesion);
+      } catch (e) {
+        alert(e.message || 'No se pudo eliminar.');
+      }
+    };
 
     /* ----- Verificación del enlace de Google ----- */
     const gInput = document.getElementById('google_link');
