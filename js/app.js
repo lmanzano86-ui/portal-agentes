@@ -291,8 +291,8 @@ async function crearSolicitud(datos) {
   return fila;
 }
 
-async function listarSolicitudes() {
-  const sesion = await sesionActual();
+async function listarSolicitudes(sesion) {
+  if (!sesion) sesion = await sesionActual();
   if (!sesion) return [];
   if (MODO_DEMO) {
     const todas = JSON.parse(Memoria.get('portal_solicitudes') || '[]');
