@@ -27,6 +27,7 @@ create table solicitudes (
   facebook text,
   web_actual text,
   enlace_google text,
+  estado_web text, -- 'sin web' | 'actualizada' | 'obsoleta'
   plan_interes text,
   notas text,
   estado text not null default 'nueva'
