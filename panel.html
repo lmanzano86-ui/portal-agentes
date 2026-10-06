@@ -401,10 +401,10 @@
             <strong>${esc(s.nombre_negocio)}</strong>
             <span class="estado estado-${esc(s.estado)}">${esc(s.estado)}</span>
           </div>
+          ${s.agente_nombre ? `<div>Agente: <strong>${esc(s.agente_nombre)}</strong></div>` : ''}
           <div class="muted small">${esc(s.giro || '')} · ${esc(s.pais || '')} · ${esc(s.telefono || '')}</div>
           ${s.enlace_google ? `<div class="muted small"><a href="${esc(s.enlace_google)}" target="_blank" rel="noopener" style="color:var(--dorado-claro)">Ver perfil en Google</a></div>` : ''}
           ${s.estado_web ? `<div class="muted small">Página web: <strong style="color:${s.estado_web === 'sin web' ? '#e0a83c' : s.estado_web === 'obsoleta' ? '#e08a8a' : '#7fd67f'}">${esc(s.estado_web)}</strong>${s.web_actual ? ` · <a href="${esc(s.web_actual)}" target="_blank" rel="noopener" style="color:var(--dorado-claro)">abrir sitio</a>` : ''}</div>` : ''}
-          ${s.agente_nombre ? `<div class="muted small">Agente: ${esc(s.agente_nombre)}</div>` : ''}
           <div class="muted small">${new Date(s.created_at).toLocaleString('es')}</div>
         </div>`).join('');
     }
