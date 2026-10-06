@@ -75,7 +75,21 @@
         </label>
       </div>
       <label>¿Tiene página web actualmente?
-        <input type="text" id="web_actual" placeholder="Enlace, o deja en blanco si no tiene">
+        <input type="text" id="web_actual" placeholder="Pega el enlace, o deja en blanco si no tiene">
+        <div id="web-estado" class="muted small" style="margin-top:4px;min-height:1.2em"></div>
+        <div id="web-preview" style="display:none;margin-top:8px">
+          <div class="muted small">Vista previa del sitio:</div>
+          <img id="web-preview-img" alt="Vista previa de la página web" style="display:none;max-width:100%;border-radius:8px;border:1px solid var(--borde);margin-top:4px">
+          <div id="web-preview-cargando" class="muted small" style="margin-top:4px">Verificando el sitio…</div>
+        </div>
+      </label>
+      <label>Estado de la página web *
+        <select id="estado_web" required>
+          <option value="sin web">No tiene página web</option>
+          <option value="actualizada">Tiene y se ve actualizada</option>
+          <option value="obsoleta">Tiene pero se ve obsoleta / desactualizada</option>
+        </select>
+        <div class="muted small">Si pegaste el enlace arriba, míralo en la vista previa y marca cómo se ve.</div>
       </label>
       <label>Enlace del perfil de Google *
         <input type="url" id="google_link" required placeholder="Ej. https://maps.app.goo.gl/… o https://g.page/…">
@@ -284,6 +298,65 @@
     gInput.addEventListener('input', chequearGoogle);
     gBtn.addEventListener('click', () => { if (gUrlValida) window.open(gUrlValida, '_blank', 'noopener'); });
 
+    /* ----- Verificación de la página web actual ----- */
+    const wInput = document.getElementById('web_actual');
+    const wEstado = document.getElementById('web-estado');
+    const wPrevBox = document.getElementById('web-preview');
+    const wPrevImg = document.getElementById('web-preview-img');
+    const wPrevCarg = document.getElementById('web-preview-cargando');
+    const wEstadoSel = document.getElementById('estado_web');
+    const wOptSinWeb = wEstadoSel.querySelector('option[value="sin web"]');
+    let wPrevTimer = null;
+    function chequearWeb() {
+      const r = validarUrlSitio(wInput.value);
+      clearTimeout(wPrevTimer);
+      if (r.vacio) {
+        wEstado.textContent = '';
+        wPrevBox.style.display = 'none'; wPrevImg.removeAttribute('src');
+        wInput.setCustomValidity('');
+        wOptSinWeb.disabled = false;
+        wEstadoSel.value = 'sin web';
+        return;
+      }
+      if (!r.ok) {
+        wEstado.textContent = r.msg; wEstado.style.color = '#e08a8a';
+        wPrevBox.style.display = 'none'; wPrevImg.removeAttribute('src');
+        wInput.setCustomValidity(r.msg);
+        return;
+      }
+      wInput.setCustomValidity('');
+      wOptSinWeb.disabled = true;
+      if (wEstadoSel.value === 'sin web') wEstadoSel.value = 'actualizada';
+      wPrevTimer = setTimeout(() => verificarSitio(r.url), 900);
+    }
+    async function verificarSitio(url) {
+      wPrevBox.style.display = 'block';
+      wPrevImg.style.display = 'none'; wPrevImg.removeAttribute('src');
+      wPrevCarg.style.display = 'block';
+      wPrevCarg.textContent = 'Verificando el sitio…';
+      wEstado.textContent = '';
+      try {
+        const resp = await fetch('https://api.microlink.io/?url=' + encodeURIComponent(url) + '&screenshot=true');
+        const j = await resp.json();
+        if (!j || j.status !== 'success' || !j.data) throw new Error('no accesible');
+        const ss = j.data.screenshot && j.data.screenshot.url;
+        wEstado.textContent = '✓ Sitio accesible' + (j.data.title ? ': ' + j.data.title : '');
+        wEstado.style.color = '#7fd67f';
+        if (ss) {
+          wPrevImg.onload = () => { wPrevImg.style.display = 'block'; wPrevCarg.style.display = 'none'; };
+          wPrevImg.onerror = () => { wPrevCarg.style.display = 'none'; };
+          wPrevImg.src = ss;
+        } else {
+          wPrevCarg.style.display = 'none';
+        }
+      } catch (e) {
+        wEstado.textContent = '⚠ No se pudo verificar el sitio (puede estar caído o bloquear la vista previa). Revisa el enlace.';
+        wEstado.style.color = '#e0a83c';
+        wPrevBox.style.display = 'none';
+      }
+    }
+    wInput.addEventListener('input', chequearWeb);
+
     document.getElementById('form-solicitud').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('btn-enviar');
@@ -295,13 +368,15 @@
         giro: v('giro'), direccion: v('direccion'), telefono: v('telefono'),
         horario: v('horario'), servicios: v('servicios'), instagram: v('instagram'),
         facebook: v('facebook'), web_actual: v('web_actual'), enlace_google: v('google_link'),
-        notas: v('notas')
+        estado_web: v('estado_web'), notas: v('notas')
       };
       try {
         await crearSolicitud(datos);
         e.target.reset();
         gEstado.textContent = ''; gBtn.disabled = true; gUrlValida = null;
         clearTimeout(gPrevTimer); gPrevBox.style.display = 'none'; gPrevImg.removeAttribute('src');
+        wEstado.textContent = ''; wPrevBox.style.display = 'none'; wPrevImg.removeAttribute('src');
+        wOptSinWeb.disabled = false;
         await pintarLista();
         alert('Solicitud enviada. El equipo de producción la tomará de aquí.');
       } catch (ex) {
@@ -328,6 +403,7 @@
           </div>
           <div class="muted small">${esc(s.giro || '')} · ${esc(s.pais || '')} · ${esc(s.telefono || '')}</div>
           ${s.enlace_google ? `<div class="muted small"><a href="${esc(s.enlace_google)}" target="_blank" rel="noopener" style="color:var(--dorado-claro)">Ver perfil en Google</a></div>` : ''}
+          ${s.estado_web ? `<div class="muted small">Página web: <strong style="color:${s.estado_web === 'sin web' ? '#e0a83c' : s.estado_web === 'obsoleta' ? '#e08a8a' : '#7fd67f'}">${esc(s.estado_web)}</strong>${s.web_actual ? ` · <a href="${esc(s.web_actual)}" target="_blank" rel="noopener" style="color:var(--dorado-claro)">abrir sitio</a>` : ''}</div>` : ''}
           ${s.agente_nombre ? `<div class="muted small">Agente: ${esc(s.agente_nombre)}</div>` : ''}
           <div class="muted small">${new Date(s.created_at).toLocaleString('es')}</div>
         </div>`).join('');
