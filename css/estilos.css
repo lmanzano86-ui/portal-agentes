@@ -113,6 +113,32 @@ textarea { resize: vertical; }
   margin: 10px 0;
 }
 
+/* Estadísticas */
+.stats-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0 8px; }
+.stat-card {
+  background: #181818; border: 1px solid var(--borde); border-radius: 12px;
+  padding: 18px 14px; text-align: center;
+}
+.stat-num { font-size: 38px; font-weight: 800; color: var(--dorado-claro); }
+.stat-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.ladder { display: flex; gap: 6px; margin: 14px 0; }
+.nivel {
+  flex: 1; text-align: center; padding: 12px 4px; border-radius: 10px;
+  background: #181818; border: 1px solid var(--borde);
+  display: flex; flex-direction: column; gap: 2px;
+}
+.nivel span { font-weight: 800; font-size: 17px; }
+.nivel small { font-size: 11px; color: var(--muted); }
+.nivel.actual { background: #1E3A1E; border: 2px solid #2ECC71; }
+.nivel.actual span { color: #A9DFBF; }
+.nivel.pasado { border-color: #2ECC71; }
+.nivel.pasado span { color: #2ECC71; }
+.ladder-info { font-size: 14px; line-height: 1.6; margin-top: 6px; }
+.progreso { background: #181818; border: 1px solid var(--borde); border-radius: 20px; height: 14px; margin: 10px 0; overflow: hidden; }
+.progreso-barra { height: 100%; background: linear-gradient(90deg, var(--dorado), #2ECC71); border-radius: 20px; transition: width .4s; }
+.estado-cerrado { background: #1E3A1E; border-color: #2ECC71; color: #A9DFBF; }
+.btn-linea.small { padding: 5px 10px; font-size: 12px; }
+
 /* Panel con barra lateral */
 .layout { display: flex; min-height: 100vh; }
 .sidebar {
