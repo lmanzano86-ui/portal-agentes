@@ -313,3 +313,19 @@ async function listarSolicitudes() {
   const { data } = await q;
   return data || [];
 }
+
+/* Marca un negocio como cerrado (venta concretada) o lo revierte. */
+async function marcarCierre(id, cerrado) {
+  if (MODO_DEMO) {
+    const todas = JSON.parse(Memoria.get('portal_solicitudes') || '[]');
+    const s = todas.find(x => x.id === id);
+    if (s) { s.cerrado = cerrado; s.cerrado_en = cerrado ? new Date().toISOString() : null; }
+    Memoria.set('portal_solicitudes', JSON.stringify(todas));
+    return;
+  }
+  const { error } = await supa.from('solicitudes').update({
+    cerrado,
+    cerrado_en: cerrado ? new Date().toISOString() : null
+  }).eq('id', id);
+  if (error) throw new Error(error.message || 'No se pudo actualizar.');
+}
