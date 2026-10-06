@@ -33,6 +33,11 @@ create table solicitudes (
   notas text,
   estado text not null default 'nueva'
     check (estado in ('nueva','en revisión','demo lista','publicada')),
+  -- Paquete automático (lo genera el sistema y Lester lo aprueba)
+  paquete_estado text default 'pendiente', -- pendiente|en_generacion|en_revision|entregado
+  demo_url text,
+  propuesta_url text,
+  contrato_url text,
   created_at timestamptz default now()
 );
 
@@ -91,6 +96,13 @@ create policy "admin actualiza estado"
 -- 7) Políticas de invitaciones (solo admin/director desde el portal)
 create policy "admin gestiona invitaciones"
   on invitaciones for all using (public.es_admin_o_director());
+
+-- 7b) Usuario de automatización (para el cron que genera paquetes).
+--     En una instalación nueva: crear el usuario vía API, copiar su UUID
+--     y ejecutar migracion-2026-10-05-paquete-auto.sql (crea estas políticas).
+--     Políticas: "automatizacion lee solicitudes" (select) y
+--     "automatizacion actualiza paquete" (update), ambas con
+--     auth.uid() = '<uuid-del-usuario-sistema>'.
 
 -- 8) Validar una invitación por token (la usa la página pública de invitación)
 create or replace function public.validar_invitacion(p_token text)
