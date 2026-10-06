@@ -207,6 +207,7 @@
     if (MODO_DEMO) document.getElementById('aviso-demo').style.display = 'block';
     const sesion = await sesionActual();
     if (!sesion) { window.location.href = 'index.html'; return; }
+    let sesionGlobal = sesion; // se reutiliza para no repetir consultas
     document.getElementById('nombre-agente').textContent = sesion.nombre;
     const rolEl = document.getElementById('rol-agente');
     rolEl.textContent = sesion.rol;
@@ -234,14 +235,14 @@
       document.getElementById('nav-negocios-label').textContent = 'Solicitudes';
       rolEl.classList.add('rol-admin');
       document.getElementById('nav-agentes').style.display = 'flex';
-      await pintarAgentes();
+      await pintarAgentes(sesion);
       await pintarSistema(sesion);
     } else {
       document.getElementById('subtitulo-lista').style.display = 'block';
     }
     document.getElementById('btn-salir').onclick = async () => { await salir(); window.location.href = 'index.html'; };
-    await pintarLista();
-    await pintarStats();
+    const items = await pintarLista(sesion);
+    await pintarStats(sesion, items);
 
     /* ----- Gestión de agentes (admin/director) ----- */
     document.getElementById('form-invitacion').addEventListener('submit', async (e) => {
@@ -274,8 +275,8 @@
       }
     });
 
-    async function pintarAgentes() {
-      const sesion = await sesionActual();
+    async function pintarAgentes(sesion) {
+      sesion = sesion || sesionGlobal;
       const lag = document.getElementById('lista-agentes');
       const agentes = await listarAgentes();
       lag.innerHTML = agentes.length ? agentes.map(a => `
@@ -473,10 +474,10 @@
 
     function v(id) { return document.getElementById(id).value.trim(); }
 
-    async function pintarLista() {
+    async function pintarLista(sesion) {
+      sesion = sesion || sesionGlobal;
       const lista = document.getElementById('lista');
-      const ses = await sesionActual();
-      const items = await listarSolicitudes();
+      const items = await listarSolicitudes(sesion);
       if (!items.length) {
         lista.innerHTML = '<p class="muted">Aún no hay solicitudes.</p>';
         return;
@@ -518,6 +519,7 @@
           </div>
         </div>`;
       }).join('');
+      return items;
     }
     function esc(t) { return String(t ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
@@ -538,9 +540,9 @@
     const NIVELES = [30, 35, 40, 45, 50];
     const metaPara = nivel => (nivel - 30) / 5 * 3; // 30→0, 35→3, 40→6, 45→9, 50→12
 
-    async function pintarStats() {
-      const ses = await sesionActual();
-      const items = await listarSolicitudes();
+    async function pintarStats(sesion, items) {
+      sesion = sesion || sesionGlobal;
+      if (!items) items = await listarSolicitudes(sesion);
       const ahora = new Date();
       const esEsteMes = f => {
         if (!f) return false;
@@ -553,10 +555,10 @@
       document.getElementById('stat-pedidos').textContent = items.length;
       document.getElementById('stat-cerrados').textContent = cerradosMes.length;
       document.getElementById('stats-periodo').textContent =
-        (ses && ses.rol !== 'agente' ? 'Producción del equipo en ' : 'Tu producción en ') + mesNombre + '.';
+        (sesion && sesion.rol !== 'agente' ? 'Producción del equipo en ' : 'Tu producción en ') + mesNombre + '.';
 
       // Nivel actual según la comisión del agente
-      let comision = ses && ses.comision_pct != null ? Number(ses.comision_pct) : 30;
+      let comision = sesion && sesion.comision_pct != null ? Number(sesion.comision_pct) : 30;
       let nivelActual = 30;
       for (const n of NIVELES) { if (comision >= n) nivelActual = n; }
       const idx = NIVELES.indexOf(nivelActual);
@@ -570,7 +572,7 @@
 
       // Progreso al siguiente nivel
       let info;
-      if (ses && ses.rol !== 'agente') {
+      if (sesion && sesion.rol !== 'agente') {
         info = `El equipo lleva <strong>${cerradosMes.length}</strong> negocios cerrados en ${mesNombre}.`;
       } else if (esMaximo) {
         info = `🏆 Estás en el nivel máximo (<strong>50%</strong>) con <strong>${cerradosMes.length}</strong> negocios cerrados en ${mesNombre}. ¡A mantenerlo!`;
