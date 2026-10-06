@@ -489,7 +489,9 @@
           if (s.propuesta_url) links.push(`<a href="${esc(s.propuesta_url)}" target="_blank" rel="noopener" style="color:var(--dorado-claro)">Propuesta comercial</a>`);
           if (s.contrato_url) links.push(`<a href="${esc(s.contrato_url)}" target="_blank" rel="noopener" style="color:var(--dorado-claro)">Contrato</a>`);
         }
-        const claseEstado = s.estado === 'demo lista' || s.estado === 'publicada' ? 'estado-verde' : '';
+        const claseEstado = s.estado === 'demo lista' || s.estado === 'publicada' ? 'estado-verde'
+          : s.estado === 'en revisión' ? 'estado-naranja'
+          : s.estado === 'nueva' ? 'estado-azul' : '';
         const paqueteTxt = s.paquete_estado === 'entregado'
           ? `<div class="small" style="color:#2ECC71;font-weight:700">Paquete: entregado ✓</div>`
           : (s.paquete_estado && s.paquete_estado !== 'pendiente'
