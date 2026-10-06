@@ -231,12 +231,30 @@ function validarEnlaceGoogle(url) {
   return { ok: true, msg: '✓ Enlace válido.', url: p.href };
 }
 
+/* Valida un enlace cualquiera de sitio web (vacío = válido, es opcional). */
+function validarUrlSitio(url) {
+  const u = String(url || '').trim();
+  if (!u) return { ok: true, vacio: true, url: '' };
+  let p;
+  try { p = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(u) ? u : 'https://' + u); }
+  catch (e) { return { ok: false, msg: 'El enlace de la página web no parece válido.' }; }
+  if (!/^https?:$/.test(p.protocol)) return { ok: false, msg: 'El enlace de la página web debe empezar con https://' };
+  return { ok: true, vacio: false, url: p.href };
+}
+
 async function crearSolicitud(datos) {
   const sesion = await sesionActual();
   if (!sesion) throw new Error('Sesión vencida. Entra de nuevo.');
   const vGoogle = validarEnlaceGoogle(datos.enlace_google);
   if (!vGoogle.ok) throw new Error(vGoogle.msg);
   datos.enlace_google = vGoogle.url;
+  const vWeb = validarUrlSitio(datos.web_actual);
+  if (!vWeb.ok) throw new Error(vWeb.msg);
+  datos.web_actual = vWeb.url;
+  const estadosWeb = ['sin web', 'actualizada', 'obsoleta'];
+  if (!estadosWeb.includes(datos.estado_web)) throw new Error('Indica si el negocio tiene página web.');
+  if (datos.web_actual && datos.estado_web === 'sin web') throw new Error('Pegaste el enlace de la web pero marcaste "No tiene página web".');
+  if (!datos.web_actual && datos.estado_web !== 'sin web') throw new Error('Marcaste que tiene página web pero no pegaste el enlace.');
   const fila = { ...datos, agente_id: sesion.id, agente_nombre: sesion.nombre, estado: 'nueva', created_at: new Date().toISOString() };
   if (MODO_DEMO) {
     const todas = JSON.parse(Memoria.get('portal_solicitudes') || '[]');
@@ -250,7 +268,7 @@ async function crearSolicitud(datos) {
     giro: datos.giro, direccion: datos.direccion, telefono: datos.telefono,
     horario: datos.horario, servicios: datos.servicios, instagram: datos.instagram,
     facebook: datos.facebook, web_actual: datos.web_actual, enlace_google: datos.enlace_google,
-    plan_interes: datos.plan_interes, notas: datos.notas, estado: 'nueva'
+    plan_interes: datos.plan_interes, notas: datos.notas, estado: 'nueva', estado_web: datos.estado_web
   });
   if (error) throw new Error('No se pudo guardar. Intenta de nuevo.');
   return fila;
