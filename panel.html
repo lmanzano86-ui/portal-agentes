@@ -159,6 +159,12 @@
     <h2 id="titulo-lista">Mis solicitudes</h2>
     <div id="lista" class="lista"></div>
   </section>
+
+  <section class="tarjeta" id="seccion-materiales" style="display:none">
+    <h2>Mis materiales</h2>
+    <p class="muted">Aquí aparecen el demo, la propuesta comercial y el contrato de tus negocios cuando el equipo los tenga listos.</p>
+    <div id="lista-materiales" class="lista"></div>
+  </section>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -190,6 +196,7 @@
     }
     document.getElementById('btn-salir').onclick = async () => { await salir(); window.location.href = 'index.html'; };
     await pintarLista();
+    await pintarMateriales();
 
     /* ----- Gestión de agentes (admin/director) ----- */
     document.getElementById('form-invitacion').addEventListener('submit', async (e) => {
@@ -405,10 +412,41 @@
           <div class="muted small">${esc(s.giro || '')} · ${esc(s.pais || '')} · ${esc(s.telefono || '')}</div>
           ${s.enlace_google ? `<div class="muted small"><a href="${esc(s.enlace_google)}" target="_blank" rel="noopener" style="color:var(--dorado-claro)">Ver perfil en Google</a></div>` : ''}
           ${s.estado_web ? `<div class="muted small">Página web: <strong style="color:${s.estado_web === 'sin web' ? '#e0a83c' : s.estado_web === 'obsoleta' ? '#e08a8a' : '#7fd67f'}">${esc(s.estado_web)}</strong>${s.web_actual ? ` · <a href="${esc(s.web_actual)}" target="_blank" rel="noopener" style="color:var(--dorado-claro)">abrir sitio</a>` : ''}</div>` : ''}
+          ${s.paquete_estado && s.paquete_estado !== 'pendiente' ? `<div class="muted small">Paquete: ${s.paquete_estado === 'entregado' ? 'entregado ✓' : s.paquete_estado === 'en_revision' ? 'en revisión' : 'en generación…'}</div>` : ''}
           <div class="muted small">${new Date(s.created_at).toLocaleString('es')}</div>
         </div>`).join('');
     }
     function esc(t) { return String(t ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+    /* ----- Mis materiales (paquete entregado por el equipo) ----- */
+    async function pintarMateriales() {
+      const sec = document.getElementById('seccion-materiales');
+      const box = document.getElementById('lista-materiales');
+      const ses = await sesionActual();
+      if (!ses || ses.rol !== 'agente') return;
+      sec.style.display = 'block';
+      const items = await listarSolicitudes();
+      const conPaquete = items.filter(s => s.paquete_estado && s.paquete_estado !== 'pendiente');
+      if (!conPaquete.length) {
+        box.innerHTML = '<p class="muted">Aún no hay materiales. Cuando el equipo prepare tus negocios, aparecerán aquí.</p>';
+        return;
+      }
+      const etiqueta = e => e === 'entregado' ? 'entregado ✓' : e === 'en_revision' ? 'en revisión' : 'en generación…';
+      box.innerHTML = conPaquete.map(s => {
+        const links = [];
+        if (s.paquete_estado === 'entregado') {
+          if (s.demo_url) links.push(`<a href="${esc(s.demo_url)}" target="_blank" rel="noopener" style="color:var(--dorado-claro)">Ver demo</a>`);
+          if (s.propuesta_url) links.push(`<a href="${esc(s.propuesta_url)}" target="_blank" rel="noopener" style="color:var(--dorado-claro)">Propuesta comercial</a>`);
+          if (s.contrato_url) links.push(`<a href="${esc(s.contrato_url)}" target="_blank" rel="noopener" style="color:var(--dorado-claro)">Contrato</a>`);
+        }
+        return `<div class="solicitud">
+          <div class="sol-head"><strong>${esc(s.nombre_negocio)}</strong>
+            <span class="estado">${etiqueta(s.paquete_estado)}</span></div>
+          <div class="muted small">${esc(s.pais || '')}</div>
+          <div style="margin-top:6px">${links.length ? links.join(' · ') : '<span class="muted">En preparación…</span>'}</div>
+        </div>`;
+      }).join('');
+    }
   })();
 </script>
 </body>
