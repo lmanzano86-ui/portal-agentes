@@ -104,6 +104,44 @@ create policy "admin gestiona invitaciones"
 --     "automatizacion actualiza paquete" (update), ambas con
 --     auth.uid() = '<uuid-del-usuario-sistema>'.
 
+-- 7c) Gestión de usuarios de sistema — SOLO la cuenta de Lester.
+--     En instalación nueva, reemplazar el UUID por el del admin.
+create or replace function public.listar_usuarios_sistema()
+returns table (id uuid, email text, nombre text, created_at timestamptz)
+language plpgsql security definer set search_path = public
+as $$
+begin
+  if auth.uid() <> '3def5e8b-ec08-4f3c-84a7-20b34de859d8' then
+    raise exception 'No autorizado';
+  end if;
+  return query
+    select u.id, u.email::text, (u.raw_user_meta_data->>'nombre')::text, u.created_at
+    from auth.users u
+    where u.email like '%@portal-agentes.local'
+    order by u.created_at;
+end;
+$$;
+
+create or replace function public.eliminar_usuario_sistema(p_user_id uuid)
+returns void
+language plpgsql security definer set search_path = public
+as $$
+declare v_email text;
+begin
+  if auth.uid() <> '3def5e8b-ec08-4f3c-84a7-20b34de859d8' then
+    raise exception 'No autorizado';
+  end if;
+  select u.email into v_email from auth.users u where u.id = p_user_id;
+  if v_email is null then
+    raise exception 'El usuario no existe';
+  end if;
+  if v_email not like '%@portal-agentes.local' then
+    raise exception 'Solo se pueden eliminar usuarios de sistema';
+  end if;
+  delete from auth.users where id = p_user_id;
+end;
+$$;
+
 -- 8) Validar una invitación por token (la usa la página pública de invitación)
 create or replace function public.validar_invitacion(p_token text)
 returns table (email text, nombre text, rol text, pais text, comision_pct numeric)
