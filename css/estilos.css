@@ -243,3 +243,5 @@ textarea { resize: vertical; }
 }
 .estado-publicada { background: #1E3A1E; border-color: #2ECC71; color: #A9DFBF; }
 .estado-verde { background: #1E3A1E; border-color: #2ECC71; color: #A9DFBF; }
+.estado-azul { background: #14283A; border-color: #4A9EFF; color: #A9CDFB; }
+.estado-naranja { background: #3A2410; border-color: #E8A33D; color: #F5D7A9; }
