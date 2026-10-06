@@ -7,165 +7,178 @@
 <link rel="stylesheet" href="css/estilos.css">
 </head>
 <body>
-<header class="topbar">
-  <div class="brand">NEW AGE PROFESSIONAL SERVICES</div>
-  <div class="userbox">
-    <span id="nombre-agente"></span>
-    <span id="rol-agente" class="rol"></span>
-    <button id="btn-salir" class="btn-linea">Salir</button>
-  </div>
-</header>
+<div class="layout">
 
-<main class="contenedor">
-  <div id="aviso-demo" class="aviso" style="display:none">
-    Modo vista previa: los datos se guardan solo en este navegador.
-  </div>
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand">NEW AGE</div>
+      <div class="sidebar-sub">Professional Services</div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item activo" data-panel="panel-solicitud">📝 Nueva solicitud</button>
+      <button class="nav-item" data-panel="panel-negocios">💼 <span id="nav-negocios-label">Mis negocios</span></button>
+      <button class="nav-item" data-panel="panel-agentes" id="nav-agentes" style="display:none">👥 Agentes</button>
+      <button class="nav-item" data-panel="panel-sistema" id="nav-sistema" style="display:none">⚙️ Usuarios de sistema</button>
+    </nav>
+    <div class="sidebar-user">
+      <div class="sidebar-nombre" id="nombre-agente"></div>
+      <span id="rol-agente" class="rol"></span>
+      <button id="btn-salir" class="btn-linea" style="margin-top:10px;width:100%">Salir</button>
+    </div>
+  </aside>
 
-  <section class="tarjeta">
-    <h2>Nueva solicitud</h2>
-    <p class="muted">Llena los datos del negocio. Con esto se genera la página demo, la propuesta de precios y el contrato.</p>
-    <form id="form-solicitud">
-      <div class="fila">
-        <label>País *
-          <select id="pais" required>
-            <option value="">Selecciona…</option>
-            <option>Estados Unidos</option>
-            <option>España</option>
-            <option>Brasil</option>
-            <option>Países Bajos</option>
-          </select>
-        </label>
-        <label>Plan de interés
-          <select id="plan">
-            <option value="">Sin definir</option>
-            <option>Lanzamiento</option>
-            <option>Profesional</option>
-            <option>Sin Entrada</option>
-          </select>
-        </label>
-      </div>
-      <div class="fila">
-        <label>Nombre del negocio *
-          <input type="text" id="nombre" required placeholder="Ej. Taquería El Faro">
-        </label>
-        <label>Giro / tipo de negocio *
-          <input type="text" id="giro" required placeholder="Ej. Restaurante mexicano">
-        </label>
-      </div>
-      <label>Dirección *
-        <input type="text" id="direccion" required placeholder="Calle, número, ciudad">
-      </label>
-      <div class="fila">
-        <label>Teléfono / WhatsApp *
-          <input type="tel" id="telefono" required placeholder="+1 …">
-        </label>
-        <label>Horario
-          <input type="text" id="horario" placeholder="Ej. Lun–Sáb 9am–8pm">
-        </label>
-      </div>
-      <label>Servicios o productos principales
-        <textarea id="servicios" rows="2" placeholder="Lo que más vende el negocio…"></textarea>
-      </label>
-      <div class="fila">
-        <label>Instagram
-          <input type="text" id="instagram" placeholder="@negocio">
-        </label>
-        <label>Facebook
-          <input type="text" id="facebook" placeholder="Enlace o nombre">
-        </label>
-      </div>
-      <label>¿Tiene página web actualmente?
-        <input type="text" id="web_actual" placeholder="Pega el enlace, o deja en blanco si no tiene">
-        <div id="web-estado" class="muted small" style="margin-top:4px;min-height:1.2em"></div>
-        <div id="web-preview" style="display:none;margin-top:8px">
-          <div class="muted small">Vista previa del sitio:</div>
-          <img id="web-preview-img" alt="Vista previa de la página web" style="display:none;max-width:100%;border-radius:8px;border:1px solid var(--borde);margin-top:4px">
-          <div id="web-preview-cargando" class="muted small" style="margin-top:4px">Verificando el sitio…</div>
+  <main class="contenido">
+    <div id="aviso-demo" class="aviso" style="display:none">
+      Modo vista previa: los datos se guardan solo en este navegador.
+    </div>
+
+    <section class="panel" id="panel-solicitud">
+      <h2>Nueva solicitud</h2>
+      <p class="muted">Llena los datos del negocio. Con esto se genera la página demo, la propuesta de precios y el contrato.</p>
+      <form id="form-solicitud">
+        <div class="fila">
+          <label>País *
+            <select id="pais" required>
+              <option value="">Selecciona…</option>
+              <option>Estados Unidos</option>
+              <option>España</option>
+              <option>Brasil</option>
+              <option>Países Bajos</option>
+            </select>
+          </label>
+          <label>Plan de interés
+            <select id="plan">
+              <option value="">Sin definir</option>
+              <option>Lanzamiento</option>
+              <option>Profesional</option>
+              <option>Sin Entrada</option>
+            </select>
+          </label>
         </div>
-      </label>
-      <label>Estado de la página web *
-        <select id="estado_web" required>
-          <option value="sin web">No tiene página web</option>
-          <option value="actualizada">Tiene y se ve actualizada</option>
-          <option value="obsoleta">Tiene pero se ve obsoleta / desactualizada</option>
-        </select>
-        <div class="muted small">Si pegaste el enlace arriba, míralo en la vista previa y marca cómo se ve.</div>
-      </label>
-      <label>Enlace del perfil de Google *
-        <input type="url" id="google_link" required placeholder="Ej. https://maps.app.goo.gl/… o https://g.page/…">
-        <div class="muted small">Pega el enlace corto del perfil del negocio en Google. Usa "Abrir para verificar" y confirma que abre el negocio correcto antes de enviar.</div>
-        <div id="google-link-estado" class="muted small" style="margin-top:4px;min-height:1.2em"></div>
-        <button type="button" class="btn-linea" id="btn-verificar-google" style="margin-top:6px" disabled>Abrir para verificar</button>
-        <div id="google-preview" style="display:none;margin-top:8px">
-          <div class="muted small">Vista previa del enlace:</div>
-          <img id="google-preview-img" alt="Vista previa del perfil de Google" style="display:none;max-width:100%;border-radius:8px;border:1px solid var(--borde);margin-top:4px">
-          <div id="google-preview-cargando" class="muted small" style="margin-top:4px">Generando vista previa…</div>
+        <div class="fila">
+          <label>Nombre del negocio *
+            <input type="text" id="nombre" required placeholder="Ej. Taquería El Faro">
+          </label>
+          <label>Giro / tipo de negocio *
+            <input type="text" id="giro" required placeholder="Ej. Restaurante mexicano">
+          </label>
         </div>
-      </label>
-      <label>Notas para el equipo de producción
-        <textarea id="notas" rows="2" placeholder="Colores de marca, fotos disponibles, algo especial…"></textarea>
-      </label>
-      <div id="error-form" class="error" style="display:none"></div>
-      <button type="submit" class="btn-dorado" id="btn-enviar">Enviar solicitud</button>
-    </form>
-  </section>
+        <label>Dirección *
+          <input type="text" id="direccion" required placeholder="Calle, número, ciudad">
+        </label>
+        <div class="fila">
+          <label>Teléfono / WhatsApp *
+            <input type="tel" id="telefono" required placeholder="+1 …">
+          </label>
+          <label>Horario
+            <input type="text" id="horario" placeholder="Ej. Lun–Sáb 9am–8pm">
+          </label>
+        </div>
+        <label>Servicios o productos principales
+          <textarea id="servicios" rows="2" placeholder="Lo que más vende el negocio…"></textarea>
+        </label>
+        <div class="fila">
+          <label>Instagram
+            <input type="text" id="instagram" placeholder="@negocio">
+          </label>
+          <label>Facebook
+            <input type="text" id="facebook" placeholder="Enlace o nombre">
+          </label>
+        </div>
+        <label>¿Tiene página web actualmente?
+          <input type="text" id="web_actual" placeholder="Pega el enlace, o deja en blanco si no tiene">
+          <div id="web-estado" class="muted small" style="margin-top:4px;min-height:1.2em"></div>
+          <div id="web-preview" style="display:none;margin-top:8px">
+            <div class="muted small">Vista previa del sitio:</div>
+            <img id="web-preview-img" alt="Vista previa de la página web" style="display:none;max-width:100%;border-radius:8px;border:1px solid var(--borde);margin-top:4px">
+            <div id="web-preview-cargando" class="muted small" style="margin-top:4px">Verificando el sitio…</div>
+          </div>
+        </label>
+        <label>Estado de la página web *
+          <select id="estado_web" required>
+            <option value="sin web">No tiene página web</option>
+            <option value="actualizada">Tiene y se ve actualizada</option>
+            <option value="obsoleta">Tiene pero se ve obsoleta / desactualizada</option>
+          </select>
+          <div class="muted small">Si pegaste el enlace arriba, míralo en la vista previa y marca cómo se ve.</div>
+        </label>
+        <label>Enlace del perfil de Google *
+          <input type="url" id="google_link" required placeholder="Ej. https://maps.app.goo.gl/… o https://g.page/…">
+          <div class="muted small">Pega el enlace corto del perfil del negocio en Google. Usa "Abrir para verificar" y confirma que abre el negocio correcto antes de enviar.</div>
+          <div id="google-link-estado" class="muted small" style="margin-top:4px;min-height:1.2em"></div>
+          <button type="button" class="btn-linea" id="btn-verificar-google" style="margin-top:6px" disabled>Abrir para verificar</button>
+          <div id="google-preview" style="display:none;margin-top:8px">
+            <div class="muted small">Vista previa del enlace:</div>
+            <img id="google-preview-img" alt="Vista previa del perfil de Google" style="display:none;max-width:100%;border-radius:8px;border:1px solid var(--borde);margin-top:4px">
+            <div id="google-preview-cargando" class="muted small" style="margin-top:4px">Generando vista previa…</div>
+          </div>
+        </label>
+        <label>Notas para el equipo de producción
+          <textarea id="notas" rows="2" placeholder="Colores de marca, fotos disponibles, algo especial…"></textarea>
+        </label>
+        <div id="error-form" class="error" style="display:none"></div>
+        <button type="submit" class="btn-dorado" id="btn-enviar">Enviar solicitud</button>
+      </form>
+    </section>
 
-  <section class="tarjeta" id="seccion-agentes" style="display:none">
-    <h2>Agentes</h2>
-    <p class="muted">Crea cuentas para tu equipo. Cada agente recibe un enlace para crear su contraseña.</p>
-    <form id="form-invitacion">
-      <div class="fila">
-        <label>Nombre del agente *
-          <input type="text" id="inv-nombre" required placeholder="Ej. María López">
-        </label>
-        <label>Correo electrónico *
-          <input type="email" id="inv-email" required placeholder="maria@correo.com">
-        </label>
-      </div>
-      <div class="fila">
-        <label>Rol
-          <select id="inv-rol">
-            <option value="agente">Agente</option>
-            <option value="director">Director</option>
-          </select>
-        </label>
-        <div></div>
-      </div>
-      <div class="fila">
-        <label>País donde trabaja *
-          <select id="inv-pais" required>
-            <option value="">Selecciona…</option>
-            <option>Estados Unidos</option>
-            <option>España</option>
-            <option>Brasil</option>
-            <option>Países Bajos</option>
-          </select>
-        </label>
-        <label>Comisión % *
-          <input type="number" id="inv-comision" required min="0" max="100" step="0.5" placeholder="Ej. 35">
-        </label>
-      </div>
-      <div id="error-inv" class="error" style="display:none"></div>
-      <button type="submit" class="btn-dorado" id="btn-invitar">Crear invitación</button>
-    </form>
-    <div id="link-invitacion" class="aviso" style="display:none"></div>
-    <h3>Equipo</h3>
-    <div id="lista-agentes" class="lista"></div>
-    <h3>Invitaciones pendientes</h3>
-    <div id="lista-invitaciones" class="lista"></div>
-    <div id="seccion-sistema" style="display:none">
-      <h3>Usuarios de sistema</h3>
+    <section class="panel" id="panel-negocios" style="display:none">
+      <h2 id="titulo-lista">Mis negocios</h2>
+      <p class="muted" id="subtitulo-lista" style="display:none">Tus solicitudes y sus materiales: demo, propuesta comercial y contrato.</p>
+      <div id="lista" class="lista"></div>
+    </section>
+
+    <section class="panel" id="panel-agentes" style="display:none">
+      <h2>Agentes</h2>
+      <p class="muted">Crea cuentas para tu equipo. Cada agente recibe un enlace para crear su contraseña.</p>
+      <form id="form-invitacion">
+        <div class="fila">
+          <label>Nombre del agente *
+            <input type="text" id="inv-nombre" required placeholder="Ej. María López">
+          </label>
+          <label>Correo electrónico *
+            <input type="email" id="inv-email" required placeholder="maria@correo.com">
+          </label>
+        </div>
+        <div class="fila">
+          <label>Rol
+            <select id="inv-rol">
+              <option value="agente">Agente</option>
+              <option value="director">Director</option>
+            </select>
+          </label>
+          <div></div>
+        </div>
+        <div class="fila">
+          <label>País donde trabaja *
+            <select id="inv-pais" required>
+              <option value="">Selecciona…</option>
+              <option>Estados Unidos</option>
+              <option>España</option>
+              <option>Brasil</option>
+              <option>Países Bajos</option>
+            </select>
+          </label>
+          <label>Comisión % *
+            <input type="number" id="inv-comision" required min="0" max="100" step="0.5" placeholder="Ej. 35">
+          </label>
+        </div>
+        <div id="error-inv" class="error" style="display:none"></div>
+        <button type="submit" class="btn-dorado" id="btn-invitar">Crear invitación</button>
+      </form>
+      <div id="link-invitacion" class="aviso" style="display:none"></div>
+      <h3>Equipo</h3>
+      <div id="lista-agentes" class="lista"></div>
+      <h3>Invitaciones pendientes</h3>
+      <div id="lista-invitaciones" class="lista"></div>
+    </section>
+
+    <section class="panel" id="panel-sistema" style="display:none">
+      <h2>Usuarios de sistema</h2>
       <p class="muted">Cuentas técnicas del portal (no son agentes). Solo visibles para ti.</p>
       <div id="lista-sistema" class="lista"></div>
-    </div>
-  </section>
-
-  <section class="tarjeta" id="seccion-negocios">
-    <h2 id="titulo-lista">Mis negocios</h2>
-    <p class="muted" id="subtitulo-lista" style="display:none">Tus solicitudes y sus materiales: demo, propuesta comercial y contrato.</p>
-    <div id="lista" class="lista"></div>
-  </section>
-</main>
+    </section>
+  </main>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
@@ -188,10 +201,20 @@
       nota.textContent = 'País asignado por tu director — no se puede cambiar.';
       paisSel.closest('label').appendChild(nota);
     }
+    /* Navegación por paneles */
+    function mostrarPanel(id) {
+      document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
+      document.getElementById(id).style.display = 'block';
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('activo', n.dataset.panel === id));
+      window.scrollTo(0, 0);
+    }
+    document.querySelectorAll('.nav-item').forEach(n => { n.onclick = () => mostrarPanel(n.dataset.panel); });
+    window.mostrarPanel = mostrarPanel;
     if (sesion.rol !== 'agente') {
       document.getElementById('titulo-lista').textContent = 'Todas las solicitudes';
+      document.getElementById('nav-negocios-label').textContent = 'Solicitudes';
       rolEl.classList.add('rol-admin');
-      document.getElementById('seccion-agentes').style.display = 'block';
+      document.getElementById('nav-agentes').style.display = 'flex';
       await pintarAgentes();
       await pintarSistema(sesion);
     } else {
@@ -263,9 +286,8 @@
 
     /* ----- Usuarios de sistema (solo la cuenta de Lester) ----- */
     async function pintarSistema(sesion) {
-      const sec = document.getElementById('seccion-sistema');
       if (!sesion || sesion.id !== ID_LESTER) return;
-      sec.style.display = 'block';
+      document.getElementById('nav-sistema').style.display = 'flex';
       const box = document.getElementById('lista-sistema');
       try {
         const us = await listarUsuariosSistema();
@@ -420,6 +442,7 @@
         wEstado.textContent = ''; wPrevBox.style.display = 'none'; wPrevImg.removeAttribute('src');
         wOptSinWeb.disabled = false;
         await pintarLista();
+        mostrarPanel('panel-negocios');
         alert('Solicitud enviada. El equipo de producción la tomará de aquí.');
       } catch (ex) {
         err.textContent = ex.message || 'No se pudo enviar.';
@@ -433,7 +456,6 @@
     async function pintarLista() {
       const lista = document.getElementById('lista');
       const ses = await sesionActual();
-      const esAgente = ses && ses.rol === 'agente';
       const items = await listarSolicitudes();
       if (!items.length) {
         lista.innerHTML = '<p class="muted">Aún no hay solicitudes.</p>';
