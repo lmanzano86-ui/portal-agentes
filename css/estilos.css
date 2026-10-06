@@ -113,6 +113,51 @@ textarea { resize: vertical; }
   margin: 10px 0;
 }
 
+/* Panel con barra lateral */
+.layout { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 250px; flex-shrink: 0;
+  background: #191919;
+  border-right: 1px solid var(--borde);
+  display: flex; flex-direction: column;
+  position: sticky; top: 0; height: 100vh;
+}
+.sidebar-brand { padding: 22px 20px 14px; border-bottom: 1px solid var(--borde); }
+.sidebar-brand .brand { font-size: 16px; }
+.sidebar-sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.sidebar-nav { flex: 1; padding: 14px 10px; display: flex; flex-direction: column; gap: 4px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; border-radius: 10px;
+  background: transparent; border: 1px solid transparent;
+  color: var(--texto); font-size: 15px; font-weight: 600;
+  cursor: pointer; text-align: left; width: 100%;
+}
+.nav-item:hover { background: #242424; }
+.nav-item.activo { background: #2A230F; color: var(--dorado-claro); border-color: var(--dorado); }
+.sidebar-user { padding: 16px; border-top: 1px solid var(--borde); }
+.sidebar-nombre { font-weight: 700; margin-bottom: 6px; }
+.contenido { flex: 1; width: 100%; max-width: 880px; margin: 0 auto; padding: 28px 24px; }
+.panel {
+  background: var(--tarjeta);
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  padding: 28px;
+}
+.panel h2 { margin: 0 0 4px; font-size: 22px; }
+.panel h3 { margin: 26px 0 4px; font-size: 17px; color: var(--dorado-claro); }
+@media (max-width: 768px) {
+  .layout { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; position: static; }
+  .sidebar-brand { padding: 14px 16px 10px; }
+  .sidebar-nav { flex-direction: row; overflow-x: auto; padding: 10px; }
+  .nav-item { white-space: nowrap; width: auto; }
+  .sidebar-user { display: flex; align-items: center; gap: 10px; }
+  .sidebar-user .btn-linea { margin-top: 0 !important; width: auto !important; margin-left: auto; }
+  .contenido { padding: 16px; }
+  .panel { padding: 20px 16px; }
+}
+
 /* Panel */
 .topbar {
   display: flex;
