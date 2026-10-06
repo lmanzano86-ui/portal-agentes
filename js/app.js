@@ -264,7 +264,7 @@ async function crearSolicitud(datos) {
     return fila;
   }
   const { error } = await supa.from('solicitudes').insert({
-    agente_id: sesion.id, pais: datos.pais, nombre_negocio: datos.nombre_negocio,
+    agente_id: sesion.id, agente_nombre: sesion.nombre, pais: datos.pais, nombre_negocio: datos.nombre_negocio,
     giro: datos.giro, direccion: datos.direccion, telefono: datos.telefono,
     horario: datos.horario, servicios: datos.servicios, instagram: datos.instagram,
     facebook: datos.facebook, web_actual: datos.web_actual, enlace_google: datos.enlace_google,
