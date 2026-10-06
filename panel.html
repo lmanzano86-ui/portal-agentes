@@ -17,6 +17,7 @@
     <nav class="sidebar-nav">
       <button class="nav-item activo" data-panel="panel-solicitud">📝 Nueva solicitud</button>
       <button class="nav-item" data-panel="panel-negocios">💼 <span id="nav-negocios-label">Mis negocios</span></button>
+      <button class="nav-item" data-panel="panel-stats">📊 Estadísticas</button>
       <button class="nav-item" data-panel="panel-agentes" id="nav-agentes" style="display:none">👥 Agentes</button>
       <button class="nav-item" data-panel="panel-sistema" id="nav-sistema" style="display:none">⚙️ Usuarios de sistema</button>
     </nav>
@@ -127,6 +128,24 @@
       <div id="lista" class="lista"></div>
     </section>
 
+    <section class="panel" id="panel-stats" style="display:none">
+      <h2>📊 Estadísticas</h2>
+      <p class="muted" id="stats-periodo">Tu producción del mes.</p>
+      <div class="stats-cards">
+        <div class="stat-card">
+          <div class="stat-num" id="stat-pedidos">0</div>
+          <div class="stat-label">📝 Pedidos hechos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-cerrados">0</div>
+          <div class="stat-label">✅ Negocios cerrados</div>
+        </div>
+      </div>
+      <h3>Mi nivel de comisión</h3>
+      <div class="ladder" id="ladder"></div>
+      <div class="ladder-info" id="ladder-info"></div>
+    </section>
+
     <section class="panel" id="panel-agentes" style="display:none">
       <h2>Agentes</h2>
       <p class="muted">Crea cuentas para tu equipo. Cada agente recibe un enlace para crear su contraseña.</p>
@@ -222,6 +241,7 @@
     }
     document.getElementById('btn-salir').onclick = async () => { await salir(); window.location.href = 'index.html'; };
     await pintarLista();
+    await pintarStats();
 
     /* ----- Gestión de agentes (admin/director) ----- */
     document.getElementById('form-invitacion').addEventListener('submit', async (e) => {
@@ -483,10 +503,84 @@
           ${links.length ? `<div style="margin-top:6px"><strong class="small">Materiales:</strong> ${links.join(' · ')}</div>` : ''}
           ${s.paquete_estado && s.paquete_estado !== 'pendiente' && s.paquete_estado !== 'entregado' ? `<div class="muted small">Materiales en preparación…</div>` : ''}
           <div class="muted small">${new Date(s.created_at).toLocaleString('es')}</div>
+          <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+            ${s.cerrado
+              ? `<span class="estado estado-cerrado">✅ Negocio cerrado</span>
+                 <button class="btn-linea small" onclick="toggleCierre('${s.id}', false)">Reabrir</button>`
+              : `<button class="btn-linea small" onclick="toggleCierre('${s.id}', true)">Marcar como cerrado</button>`}
+          </div>
         </div>`;
       }).join('');
     }
     function esc(t) { return String(t ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+    /* ----- Negocio cerrado ----- */
+    window.toggleCierre = async (id, cerrado) => {
+      const accion = cerrado ? 'marcar este negocio como CERRADO' : 'reabrir este negocio';
+      if (!window.confirm(`¿Seguro que quieres ${accion}?`)) return;
+      try {
+        await marcarCierre(id, cerrado);
+        await pintarLista();
+        await pintarStats();
+      } catch (e) {
+        alert(e.message || 'No se pudo actualizar.');
+      }
+    };
+
+    /* ----- Estadísticas y escalera de comisión ----- */
+    const NIVELES = [30, 35, 40, 45, 50];
+    const metaPara = nivel => (nivel - 30) / 5 * 3; // 30→0, 35→3, 40→6, 45→9, 50→12
+
+    async function pintarStats() {
+      const ses = await sesionActual();
+      const items = await listarSolicitudes();
+      const ahora = new Date();
+      const esEsteMes = f => {
+        if (!f) return false;
+        const d = new Date(f);
+        return d.getFullYear() === ahora.getFullYear() && d.getMonth() === ahora.getMonth();
+      };
+      const cerradosMes = items.filter(s => s.cerrado && esEsteMes(s.cerrado_en));
+      const mesNombre = ahora.toLocaleString('es', { month: 'long' });
+
+      document.getElementById('stat-pedidos').textContent = items.length;
+      document.getElementById('stat-cerrados').textContent = cerradosMes.length;
+      document.getElementById('stats-periodo').textContent =
+        (ses && ses.rol !== 'agente' ? 'Producción del equipo en ' : 'Tu producción en ') + mesNombre + '.';
+
+      // Nivel actual según la comisión del agente
+      let comision = ses && ses.comision_pct != null ? Number(ses.comision_pct) : 30;
+      let nivelActual = 30;
+      for (const n of NIVELES) { if (comision >= n) nivelActual = n; }
+      const idx = NIVELES.indexOf(nivelActual);
+      const esMaximo = idx === NIVELES.length - 1;
+
+      // Barra de niveles
+      document.getElementById('ladder').innerHTML = NIVELES.map(n => {
+        const cls = n === nivelActual ? 'nivel actual' : (n < nivelActual ? 'nivel pasado' : 'nivel');
+        return `<div class="${cls}"><span>${n}%</span><small>${metaPara(n)} <span class="muted">neg.</span></small></div>`;
+      }).join('');
+
+      // Progreso al siguiente nivel
+      let info;
+      if (ses && ses.rol !== 'agente') {
+        info = `El equipo lleva <strong>${cerradosMes.length}</strong> negocios cerrados en ${mesNombre}.`;
+      } else if (esMaximo) {
+        info = `🏆 Estás en el nivel máximo (<strong>50%</strong>) con <strong>${cerradosMes.length}</strong> negocios cerrados en ${mesNombre}. ¡A mantenerlo!`;
+      } else {
+        const sig = NIVELES[idx + 1];
+        const meta = metaPara(sig);
+        const faltan = Math.max(0, meta - cerradosMes.length);
+        const pct = Math.min(100, Math.round(cerradosMes.length / meta * 100));
+        info = `Nivel actual: <strong style="color:#2ECC71">${nivelActual}%</strong> · ` +
+          `Cerrados en ${mesNombre}: <strong>${cerradosMes.length} de ${meta}</strong><br>` +
+          `<div class="progreso"><div class="progreso-barra" style="width:${pct}%"></div></div>` +
+          (faltan > 0
+            ? `Te faltan <strong>${faltan}</strong> negocio${faltan === 1 ? '' : 's'} para subir al <strong>${sig}%</strong>.`
+            : `🎉 ¡Meta cumplida! Subes al <strong>${sig}%</strong>.`);
+      }
+      document.getElementById('ladder-info').innerHTML = info;
+    }
   })();
 </script>
 </body>
