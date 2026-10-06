@@ -16,6 +16,7 @@ create table perfiles (
 create table solicitudes (
   id uuid primary key default gen_random_uuid(),
   agente_id uuid not null references perfiles(id),
+  agente_nombre text,
   pais text not null,
   nombre_negocio text not null,
   giro text,
