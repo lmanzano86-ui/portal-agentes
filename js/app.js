@@ -175,6 +175,23 @@ async function revocarInvitacion(id) {
   await supa.from('invitaciones').delete().eq('id', id);
 }
 
+/* ----- Usuarios de sistema (solo la cuenta de Lester) ----- */
+const ID_LESTER = '3def5e8b-ec08-4f3c-84a7-20b34de859d8';
+const EMAIL_SISTEMA_EN_USO = 'sistema@portal-agentes.local';
+
+async function listarUsuariosSistema() {
+  if (MODO_DEMO) return [];
+  const { data, error } = await supa.rpc('listar_usuarios_sistema');
+  if (error) throw new Error('No se pudieron listar los usuarios de sistema.');
+  return data || [];
+}
+
+async function eliminarUsuarioSistema(id) {
+  if (MODO_DEMO) return;
+  const { error } = await supa.rpc('eliminar_usuario_sistema', { p_user_id: id });
+  if (error) throw new Error(error.message || 'No se pudo eliminar.');
+}
+
 /* ---------- Aceptar invitación (página pública) ---------- */
 async function validarInvitacion(token) {
   if (MODO_DEMO) {
