@@ -1,1 +1,103 @@
-LS0gPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09Ci0tIE1pZ3JhY2nDs24gMjAyNi0xMC0xMTogZWwgYWRtaW5pc3RyYWRvciBjcmVhIHkgZWRpdGEgdXN1YXJpb3MKLS0gZGlyZWN0YW1lbnRlIGRlc2RlIGVsIHBhbmVsIChzaW4gZGVwZW5kZXIgZGVsIGVubGFjZSBkZSBpbnZpdGFjacOzbikuCi0tCi0tIEPDk01PIEFQTElDQVJMQSAoTGVzdGVyLCBlbiBTdXBhYmFzZSDihpIgU1FMIEVkaXRvcik6Ci0tICAgMSkgRWplY3V0YSBlbCBCTE9RVUUgMSBjb21wbGV0by4KLS0gICAyKSBFamVjdXRhIGVsIEJMT1FVRSAyIGRlc3B1w6lzIGRlIHBlZ2FyIHR1IHNlcnZpY2Vfcm9sZSBrZXkKLS0gICAgICAoRGFzaGJvYXJkIOKGkiBQcm9qZWN0IFNldHRpbmdzIOKGkiBBUEkg4oaSIHNlcnZpY2Vfcm9sZSkuCi0tICAgICAgRXNhIGNsYXZlIE5VTkNBIHZhIGVuIGVsIGPDs2RpZ28gZGVsIHBvcnRhbDogcXVlZGEgZ3VhcmRhZGEKLS0gICAgICBlbiBlbCBWYXVsdCBkZSBsYSBiYXNlIGRlIGRhdG9zLCBzb2xvIGxlZ2libGUgcG9yIGVsIHNlcnZpZG9yLgotLSAgIDMpIEFkZW3DoXMsIHBhcmEgcXVlIGVsIGZsdWpvIGRlIGludml0YWNpw7NuIGZ1bmNpb25lOgotLSAgICAgIERhc2hib2FyZCDihpIgQXV0aGVudGljYXRpb24g4oaSIFNpZ24gSW4gLyBTaWduIFVwIOKGkiBkZXNhY3RpdmEKLS0gICAgICAiQ29uZmlybSBlbWFpbCIuCi0tID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQoKLS0gLS0tLS0tLS0tLSBCTE9RVUUgMTogZXh0ZW5zacOzbiB5IGZ1bmNpb25lcyAtLS0tLS0tLS0tCmNyZWF0ZSBleHRlbnNpb24gaWYgbm90IGV4aXN0cyBwZ19uZXQgd2l0aCBzY2hlbWEgZXh0ZW5zaW9uczsKCi0tIExsYW1hZGEgZ2Vuw6lyaWNhIGEgbGEgQXV0aCBBZG1pbiBBUEkuIFNvbG8gZWwgYWRtaW4gcHVlZGUgdXNhcmxhLgotLSBEZXZ1ZWx2ZSBlbCByZXF1ZXN0X2lkOyBlbCByZXN1bHRhZG8gc2UgbGVlIGNvbiBhZG1pbl9hdXRoX3Jlc3VsdCgpLgpjcmVhdGUgb3IgcmVwbGFjZSBmdW5jdGlvbiBwdWJsaWMuYWRtaW5fYXV0aF9yZXF1ZXN0KHBfbWV0aG9kIHRleHQsIHBfcGF0aCB0ZXh0LCBwX2JvZHkganNvbmIgZGVmYXVsdCAne30nOjpqc29uYikKcmV0dXJucyBiaWdpbnQKbGFuZ3VhZ2UgcGxwZ3NxbCBzZWN1cml0eSBkZWZpbmVyIHNldCBzZWFyY2hfcGF0aCA9IHB1YmxpYywgZXh0ZW5zaW9ucywgbmV0CmFzICQkCmRlY2xhcmUKICB2X2tleSB0ZXh0OwogIHZfcmVxIGJpZ2ludDsKICB2X3VybCB0ZXh0IDo9ICdodHRwczovL2lsZHZpb2NqbXFjeWZrbnpseXJtLnN1cGFiYXNlLmNvJyB8fCBwX3BhdGg7CmJlZ2luCiAgaWYgbm90IHB1YmxpYy5lc19hZG1pbigpIHRoZW4KICAgIHJhaXNlIGV4Y2VwdGlvbiAnU2luIHBlcm1pc286IHNvbG8gZWwgYWRtaW5pc3RyYWRvci4nOwogIGVuZCBpZjsKICBzZWxlY3QgZGVjcnlwdGVkX3NlY3JldCBpbnRvIHZfa2V5CiAgZnJvbSB2YXVsdC5kZWNyeXB0ZWRfc2VjcmV0cyB3aGVyZSBuYW1lID0gJ3BvcnRhbF9zZXJ2aWNlX3JvbGUnIGxpbWl0IDE7CiAgaWYgdl9rZXkgaXMgbnVsbCB0aGVuCiAgICByYWlzZSBleGNlcHRpb24gJ0ZhbHRhIGNvbmZpZ3VyYXIgbGEgY2xhdmUgc2VydmljZV9yb2xlOiBlamVjdXRhIGVsIEJMT1FVRSAyIGRlIGVzdGEgbWlncmFjacOzbi4nOwogIGVuZCBpZjsKICBpZiB1cHBlcihwX21ldGhvZCkgPSAnUE9TVCcgdGhlbgogICAgc2VsZWN0IG5ldC5odHRwX3Bvc3QodXJsIDo9IHZfdXJsLAogICAgICBoZWFkZXJzIDo9IGpzb25iX2J1aWxkX29iamVjdCgnYXBpa2V5Jywgdl9rZXksICdBdXRob3JpemF0aW9uJywgJ0JlYXJlciAnIHx8IHZfa2V5LCAnQ29udGVudC1UeXBlJywgJ2FwcGxpY2F0aW9uL2pzb24nKSwKICAgICAgYm9keSA6PSBwX2JvZHkpIGludG8gdl9yZXE7CiAgZWxzaWYgdXBwZXIocF9tZXRob2QpID0gJ1BVVCcgdGhlbgogICAgc2VsZWN0IG5ldC5odHRwX3B1dCh1cmwgOj0gdl91cmwsCiAgICAgIGhlYWRlcnMgOj0ganNvbmJfYnVpbGRfb2JqZWN0KCdhcGlrZXknLCB2X2tleSwgJ0F1dGhvcml6YXRpb24nLCAnQmVhcmVyICcgfHwgdl9rZXksICdDb250ZW50LVR5cGUnLCAnYXBwbGljYXRpb24vanNvbicpLAogICAgICBib2R5IDo9IHBfYm9keSkgaW50byB2X3JlcTsKICBlbHNpZiB1cHBlcihwX21ldGhvZCkgPSAnREVMRVRFJyB0aGVuCiAgICBzZWxlY3QgbmV0Lmh0dHBfZGVsZXRlKHVybCA6PSB2X3VybCwKICAgICAgaGVhZGVycyA6PSBqc29uYl9idWlsZF9vYmplY3QoJ2FwaWtleScsIHZfa2V5LCAnQXV0aG9yaXphdGlvbicsICdCZWFyZXIgJyB8fCB2X2tleSkpIGludG8gdl9yZXE7CiAgZWxzZQogICAgcmFpc2UgZXhjZXB0aW9uICdNw6l0b2RvIG5vIHNvcG9ydGFkbzogJScsIHBfbWV0aG9kOwogIGVuZCBpZjsKICByZXR1cm4gdl9yZXE7CmVuZDsKJCQ7CgotLSBMZWUgZWwgcmVzdWx0YWRvIGRlIHVuYSBsbGFtYWRhIGFudGVyaW9yLiBEZXZ1ZWx2ZSB7InBlbmRpbmciOiB0cnVlfQotLSBzaSBhw7puIG5vIGhheSByZXNwdWVzdGEsIG8geyJzdGF0dXMiOiBuLCAiYm9keSI6IHsuLi59fS4KY3JlYXRlIG9yIHJlcGxhY2UgZnVuY3Rpb24gcHVibGljLmFkbWluX2F1dGhfcmVzdWx0KHBfcmVxdWVzdF9pZCBiaWdpbnQpCnJldHVybnMganNvbmIKbGFuZ3VhZ2UgcGxwZ3NxbCBzZWN1cml0eSBkZWZpbmVyIHNldCBzZWFyY2hfcGF0aCA9IHB1YmxpYywgZXh0ZW5zaW9ucywgbmV0CmFzICQkCmRlY2xhcmUKICByIHJlY29yZDsKYmVnaW4KICBpZiBub3QgcHVibGljLmVzX2FkbWluKCkgdGhlbgogICAgcmFpc2UgZXhjZXB0aW9uICdTaW4gcGVybWlzbzogc29sbyBlbCBhZG1pbmlzdHJhZG9yLic7CiAgZW5kIGlmOwogIHNlbGVjdCBzdGF0dXNfY29kZSwgY29udGVudCBpbnRvIHIgZnJvbSBuZXQuX2h0dHBfcmVzcG9uc2Ugd2hlcmUgaWQgPSBwX3JlcXVlc3RfaWQ7CiAgaWYgbm90IGZvdW5kIHRoZW4KICAgIHJldHVybiBqc29uYl9idWlsZF9vYmplY3QoJ3BlbmRpbmcnLCB0cnVlKTsKICBlbmQgaWY7CiAgZGVsZXRlIGZyb20gbmV0Ll9odHRwX3Jlc3BvbnNlIHdoZXJlIGlkID0gcF9yZXF1ZXN0X2lkOwogIHJldHVybiBqc29uYl9idWlsZF9vYmplY3QoJ3N0YXR1cycsIHIuc3RhdHVzX2NvZGUsICdib2R5Jywgci5jb250ZW50Ojpqc29uYik7CmVuZDsKJCQ7CgotLSBMaXN0YSBkZWwgZXF1aXBvIGNvbiBjb3JyZW8gKGVsIGNvcnJlbyB2aXZlIGVuIGF1dGgudXNlcnMpLgotLSBFeGNsdXllIGxhcyBjdWVudGFzIHTDqWNuaWNhcyBAcG9ydGFsLWFnZW50ZXMubG9jYWwuCmNyZWF0ZSBvciByZXBsYWNlIGZ1bmN0aW9uIHB1YmxpYy5hZG1pbl9saXN0YXJfYWdlbnRlcygpCnJldHVybnMgdGFibGUgKGlkIHV1aWQsIGVtYWlsIHRleHQsIG5vbWJyZSB0ZXh0LCByb2wgdGV4dCwgYWN0aXZvIGJvb2xlYW4sCiAgICAgICAgICAgICAgIHBhaXMgdGV4dCwgY29taXNpb25fcGN0IG51bWVyaWMsIGNyZWF0ZWRfYXQgdGltZXN0YW1wdHopCmxhbmd1YWdlIHNxbCBzZWN1cml0eSBkZWZpbmVyIHNldCBzZWFyY2hfcGF0aCA9IHB1YmxpYwphcyAkJAogIHNlbGVjdCBwLmlkLCB1LmVtYWlsOjp0ZXh0LCBwLm5vbWJyZSwgcC5yb2wsIHAuYWN0aXZvLCBwLnBhaXMsIHAuY29taXNpb25fcGN0LCBwLmNyZWF0ZWRfYXQKICBmcm9tIHB1YmxpYy5wZXJmaWxlcyBwCiAgam9pbiBhdXRoLnVzZXJzIHUgb24gdS5pZCA9IHAuaWQKICB3aGVyZSB1LmVtYWlsIG5vdCBsaWtlICclQHBvcnRhbC1hZ2VudGVzLmxvY2FsJwogIG9yZGVyIGJ5IHAuY3JlYXRlZF9hdDsKJCQ7CgpncmFudCBleGVjdXRlIG9uIGZ1bmN0aW9uIHB1YmxpYy5hZG1pbl9hdXRoX3JlcXVlc3QodGV4dCwgdGV4dCwganNvbmIpIHRvIGF1dGhlbnRpY2F0ZWQ7CmdyYW50IGV4ZWN1dGUgb24gZnVuY3Rpb24gcHVibGljLmFkbWluX2F1dGhfcmVzdWx0KGJpZ2ludCkgdG8gYXV0aGVudGljYXRlZDsKZ3JhbnQgZXhlY3V0ZSBvbiBmdW5jdGlvbiBwdWJsaWMuYWRtaW5fbGlzdGFyX2FnZW50ZXMoKSB0byBhdXRoZW50aWNhdGVkOwoKLS0gLS0tLS0tLS0tLSBCTE9RVUUgMjogZ3VhcmRhciBsYSBzZXJ2aWNlX3JvbGUgZW4gZWwgVmF1bHQgLS0tLS0tLS0tLQotLSBQZWdhIHR1IHNlcnZpY2Vfcm9sZSBrZXkgZW50cmUgbGFzIGNvbWlsbGFzIHNpbXBsZXMgeSBlamVjdXRhLgotLSAoRGFzaGJvYXJkIOKGkiBQcm9qZWN0IFNldHRpbmdzIOKGkiBBUEkg4oaSICJzZXJ2aWNlX3JvbGUiIOKGkiBSZXZlYWwpCi0tCi0tIHNlbGVjdCB2YXVsdC5jcmVhdGVfc2VjcmV0KCdQRUdBX0FRVUlfVFVfU0VSVklDRV9ST0xFX0tFWScsICdwb3J0YWxfc2VydmljZV9yb2xlJywKLS0gICAnU2VydmljZSByb2xlIHBhcmEgY3JlYXIgdXN1YXJpb3MgZGVzZGUgZWwgcGFuZWwgZGVsIHBvcnRhbCcpOwotLQotLSBQYXJhIHZlcmlmaWNhciBxdWUgcXVlZMOzIGd1YXJkYWRhIChubyBtdWVzdHJhIGVsIHZhbG9yKToKLS0gc2VsZWN0IG5hbWUsIGNyZWF0ZWRfYXQgZnJvbSB2YXVsdC5zZWNyZXRzIHdoZXJlIG5hbWUgPSAncG9ydGFsX3NlcnZpY2Vfcm9sZSc7Cg==
+-- ============================================================
+-- Migración 2026-10-11: el administrador crea y edita usuarios
+-- directamente desde el panel (sin depender del enlace de invitación).
+--
+-- CÓMO APLICARLA (Lester, en Supabase → SQL Editor):
+--   1) Ejecuta el BLOQUE 1 completo.
+--   2) Ejecuta el BLOQUE 2 después de pegar tu service_role key
+--      (Dashboard → Project Settings → API → service_role).
+--      Esa clave NUNCA va en el código del portal: queda guardada
+--      en el Vault de la base de datos, solo legible por el servidor.
+--   3) Además, para que el flujo de invitación funcione:
+--      Dashboard → Authentication → Sign In / Sign Up → desactiva
+--      "Confirm email".
+-- ============================================================
+
+-- ---------- BLOQUE 1: extensión y funciones ----------
+create extension if not exists pg_net with schema extensions;
+
+-- Llamada genérica a la Auth Admin API. Solo el admin puede usarla.
+-- Devuelve el request_id; el resultado se lee con admin_auth_result().
+create or replace function public.admin_auth_request(p_method text, p_path text, p_body jsonb default '{}'::jsonb)
+returns bigint
+language plpgsql security definer set search_path = public, extensions, net
+as $$
+declare
+  v_key text;
+  v_req bigint;
+  v_url text := 'https://ildviocjmqcyfknzlyrm.supabase.co' || p_path;
+begin
+  if not public.es_admin() then
+    raise exception 'Sin permiso: solo el administrador.';
+  end if;
+  select decrypted_secret into v_key
+  from vault.decrypted_secrets where name = 'portal_service_role' limit 1;
+  if v_key is null then
+    raise exception 'Falta configurar la clave service_role: ejecuta el BLOQUE 2 de esta migración.';
+  end if;
+  if upper(p_method) = 'POST' then
+    select net.http_post(url := v_url,
+      headers := jsonb_build_object('apikey', v_key, 'Authorization', 'Bearer ' || v_key, 'Content-Type', 'application/json'),
+      body := p_body) into v_req;
+  elsif upper(p_method) = 'PUT' then
+    select net.http_put(url := v_url,
+      headers := jsonb_build_object('apikey', v_key, 'Authorization', 'Bearer ' || v_key, 'Content-Type', 'application/json'),
+      body := p_body) into v_req;
+  elsif upper(p_method) = 'DELETE' then
+    select net.http_delete(url := v_url,
+      headers := jsonb_build_object('apikey', v_key, 'Authorization', 'Bearer ' || v_key)) into v_req;
+  else
+    raise exception 'Método no soportado: %', p_method;
+  end if;
+  return v_req;
+end;
+$$;
+
+-- Lee el resultado de una llamada anterior. Devuelve {"pending": true}
+-- si aún no hay respuesta, o {"status": n, "body": {...}}.
+create or replace function public.admin_auth_result(p_request_id bigint)
+returns jsonb
+language plpgsql security definer set search_path = public, extensions, net
+as $$
+declare
+  r record;
+begin
+  if not public.es_admin() then
+    raise exception 'Sin permiso: solo el administrador.';
+  end if;
+  select status_code, content into r from net._http_response where id = p_request_id;
+  if not found then
+    return jsonb_build_object('pending', true);
+  end if;
+  delete from net._http_response where id = p_request_id;
+  return jsonb_build_object('status', r.status_code, 'body', r.content::jsonb);
+end;
+$$;
+
+-- Lista del equipo con correo (el correo vive en auth.users).
+-- Excluye las cuentas técnicas @portal-agentes.local.
+create or replace function public.admin_listar_agentes()
+returns table (id uuid, email text, nombre text, rol text, activo boolean,
+               pais text, comision_pct numeric, created_at timestamptz)
+language sql security definer set search_path = public
+as $$
+  select p.id, u.email::text, p.nombre, p.rol, p.activo, p.pais, p.comision_pct, p.created_at
+  from public.perfiles p
+  join auth.users u on u.id = p.id
+  where u.email not like '%@portal-agentes.local'
+  order by p.created_at;
+$$;
+
+grant execute on function public.admin_auth_request(text, text, jsonb) to authenticated;
+grant execute on function public.admin_auth_result(bigint) to authenticated;
+grant execute on function public.admin_listar_agentes() to authenticated;
+
+-- ---------- BLOQUE 2: guardar la service_role en el Vault ----------
+-- Pega tu service_role key entre las comillas simples y ejecuta.
+-- (Dashboard → Project Settings → API → "service_role" → Reveal)
+--
+-- select vault.create_secret('PEGA_AQUI_TU_SERVICE_ROLE_KEY', 'portal_service_role',
+--   'Service role para crear usuarios desde el panel del portal');
+--
+-- Para verificar que quedó guardada (no muestra el valor):
+-- select name, created_at from vault.secrets where name = 'portal_service_role';
