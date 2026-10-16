@@ -21,6 +21,7 @@
       <button class="nav-item" data-panel="panel-cupones">🎟️ Cupones</button>
       <button class="nav-item" data-panel="panel-agentes" id="nav-agentes" style="display:none">👥 Agentes</button>
       <button class="nav-item" data-panel="panel-sistema" id="nav-sistema" style="display:none">⚙️ Usuarios de sistema</button>
+      <button class="nav-item" data-panel="panel-auditoria" id="nav-auditoria" style="display:none">📋 Auditoría</button>
     </nav>
     <div class="sidebar-user">
       <div class="sidebar-nombre" id="nombre-agente"></div>
@@ -126,6 +127,24 @@
     <section class="panel" id="panel-negocios" style="display:none">
       <h2 id="titulo-lista">Mis negocios</h2>
       <p class="muted" id="subtitulo-lista" style="display:none">Tus solicitudes y sus materiales: demo, propuesta comercial y contrato.</p>
+      <div class="barra-filtros">
+        <input type="search" id="filtro-buscar" placeholder="Buscar por negocio, giro o teléfono…" autocomplete="off">
+        <select id="filtro-estado">
+          <option value="">Todos los estados</option>
+          <option value="nueva">Nueva</option>
+          <option value="en revisión">En revisión</option>
+          <option value="demo lista">Demo lista</option>
+          <option value="publicada">Publicada</option>
+          <option value="descartada">Descartada</option>
+        </select>
+        <select id="filtro-pais">
+          <option value="">Todos los países</option>
+          <option>Estados Unidos</option>
+          <option>España</option>
+          <option>Brasil</option>
+          <option>Países Bajos</option>
+        </select>
+      </div>
       <div id="lista" class="lista"></div>
     </section>
 
@@ -251,7 +270,7 @@
           </div>
           <div class="fila">
             <label>Contraseña *
-              <input type="text" id="cu-password" required minlength="6" placeholder="Mínimo 6 caracteres" autocomplete="off">
+              <input type="password" id="cu-password" required minlength="6" placeholder="Mínimo 6 caracteres" autocomplete="off">
             </label>
             <label>Rol
               <select id="cu-rol">
@@ -291,13 +310,47 @@
       <p class="muted">Cuentas técnicas del portal (no son agentes). Solo visibles para ti.</p>
       <div id="lista-sistema" class="lista"></div>
     </section>
+
+    <section class="panel" id="panel-auditoria" style="display:none">
+      <h2>📋 Auditoría</h2>
+      <p class="muted">Registro de cambios importantes: estados, roles, comisiones, activaciones.</p>
+      <div id="lista-auditoria" class="lista"></div>
+    </section>
   </main>
 </div>
+
+<div id="toasts" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
 <script>
+/* ---------- Sistema de toasts (reemplaza alert) ---------- */
+function toast(msg, tipo) {
+  const box = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = 'toast' + (tipo ? ' ' + tipo : '');
+  el.textContent = msg;
+  box.appendChild(el);
+  setTimeout(() => { el.classList.add('salir'); setTimeout(() => el.remove(), 350); }, 3200);
+}
+
+/* ---------- Modal de confirmación (reemplaza confirm) ---------- */
+function confirmar(titulo, mensaje, textoBoton) {
+  return new Promise(resolve => {
+    const fondo = document.createElement('div');
+    fondo.className = 'modal-fondo';
+    fondo.innerHTML =
+      '<div class="modal-caja"><h3>' + esc(titulo) + '</h3><p>' + esc(mensaje) + '</p>' +
+      '<div class="modal-botones"><button class="btn-linea" id="m-cancel">Cancelar</button>' +
+      '<button class="btn-dorado" id="m-ok">' + esc(textoBoton || 'Confirmar') + '</button></div></div>';
+    document.body.appendChild(fondo);
+    const cerrar = v => { fondo.remove(); resolve(v); };
+    fondo.querySelector('#m-cancel').onclick = () => cerrar(false);
+    fondo.querySelector('#m-ok').onclick = () => cerrar(true);
+    fondo.addEventListener('click', e => { if (e.target === fondo) cerrar(false); });
+  });
+}
   (async () => {
     if (MODO_DEMO) document.getElementById('aviso-demo').style.display = 'block';
     const sesion = await sesionActual();
@@ -334,6 +387,10 @@
       await pintarSistema(sesion);
     } else {
       document.getElementById('subtitulo-lista').style.display = 'block';
+    }
+    if (sesion.rol === 'admin') {
+      document.getElementById('nav-auditoria').style.display = 'flex';
+      await pintarAuditoria();
     }
     document.getElementById('btn-salir').onclick = async () => { await salir(); window.location.href = 'index.html'; };
     const items = await pintarLista(sesion);
@@ -393,7 +450,7 @@
           </div>
           <div class="muted small">${esc(a.email || '')}${a.pais ? ' · ' + esc(a.pais) : ''}${a.comision_pct != null ? ' · Comisión ' + esc(a.comision_pct) + '%' : ''}</div>
           <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
-            ${a.id !== sesion.id ? `<button class="btn-linea" onclick="toggleAgente('${a.id}', ${a.activo})">${a.activo ? 'Desactivar' : 'Activar'}</button>` : '<div class="muted small">Tú</div>'}
+            ${esAdm && a.id !== sesion.id ? `<button class="btn-linea" onclick="toggleAgente('${a.id}', ${a.activo})">${a.activo ? 'Desactivar' : 'Activar'}</button>` : (a.id !== sesion.id ? '<div class="muted small">Solo el administrador puede activar/desactivar.</div>' : '<div class="muted small">Tú</div>')}
             ${esAdm && a.id !== sesion.id ? `<button class="btn-linea" onclick="editarAgente('${a.id}')">Editar</button>` : ''}
           </div>
         </div>`).join('') : '<p class="muted">Aún no hay agentes.</p>';
@@ -474,7 +531,7 @@
           </label>
         </div>
         <div class="fila">
-          <label>Nueva contraseña (opcional)<input type="text" id="ed-pass-${id}" placeholder="Déjala vacía para no cambiarla" autocomplete="off"></label>
+          <label>Nueva contraseña (opcional)<input type="password" id="ed-pass-${id}" placeholder="Déjala vacía para no cambiarla" autocomplete="new-password"></label>
           <div></div>
         </div>
         <div id="ed-error-${id}" class="error" style="display:none"></div>
@@ -512,14 +569,37 @@
 
     window.eliminarAgente = async (id) => {
       const a = window._agentes[id];
-      if (!window.confirm('¿Eliminar al usuario ' + (a ? a.nombre : id) + '? Esta acción no se puede deshacer.')) return;
+      if (!await confirmar('Eliminar usuario', '¿Eliminar a ' + (a ? a.nombre : id) + '? Esta acción no se puede deshacer.', 'Eliminar')) return;
       try {
         await adminEliminarUsuario(id);
         await pintarAgentes();
+        toast('Usuario eliminado.');
       } catch (ex) {
-        alert(ex.message || 'No se pudo eliminar.');
+        toast(ex.message || 'No se pudo eliminar.', 'error');
       }
     };
+
+    /* ----- Auditoría (solo admin) ----- */
+    async function pintarAuditoria() {
+      const box = document.getElementById('lista-auditoria');
+      try {
+        const items = await listarAuditoria(100);
+        box.innerHTML = items.length ? items.map(a => `
+          <div class="solicitud">
+            <div class="sol-head">
+              <strong>${esc(a.accion)}</strong>
+              <span class="muted small">${new Date(a.created_at).toLocaleString('es')}</span>
+            </div>
+            <div class="muted small">${esc(a.tabla)}${a.registro_id ? ' · ' + esc(a.registro_id.slice(0, 8)) : ''}${a.actor_nombre ? ' · por ' + esc(a.actor_nombre) : ''}</div>
+            ${a.antes || a.despues ? `<div class="muted small" style="margin-top:4px">` +
+              (a.antes ? 'Antes: <code>' + esc(JSON.stringify(a.antes)) + '</code> ' : '') +
+              (a.despues ? '→ Después: <code>' + esc(JSON.stringify(a.despues)) + '</code>' : '') + `</div>` : ''}
+          </div>`).join('')
+          : '<p class="muted">Aún no hay eventos registrados.</p>';
+      } catch (e) {
+        box.innerHTML = '<p class="muted">No se pudo cargar la auditoría.</p>';
+      }
+    }
 
     /* ----- Usuarios de sistema (solo la cuenta de Lester) ----- */
     async function pintarSistema(sesion) {
@@ -543,13 +623,14 @@
       }
     }
     window.eliminarSistema = async (id, email) => {
-      if (!window.confirm(`¿Eliminar el usuario de sistema ${email}? Esta acción no se puede deshacer.`)) return;
+      if (!await confirmar('Eliminar usuario de sistema', '¿Eliminar ' + email + '? Esta acción no se puede deshacer.', 'Eliminar')) return;
       try {
         await eliminarUsuarioSistema(id);
         const sesion = await sesionActual();
         await pintarSistema(sesion);
+        toast('Usuario de sistema eliminado.');
       } catch (e) {
-        alert(e.message || 'No se pudo eliminar.');
+        toast(e.message || 'No se pudo eliminar.', 'error');
       }
     };
 
@@ -674,13 +755,20 @@
       try {
         await crearSolicitud(datos);
         e.target.reset();
+        // B5: re-aplicar el país bloqueado tras el reset (si no, el siguiente
+        // envío guardaría país vacío burlando el required).
+        if (sesionGlobal && sesionGlobal.pais) {
+          const paisSel = document.getElementById('pais');
+          paisSel.value = sesionGlobal.pais;
+          paisSel.disabled = true;
+        }
         gEstado.textContent = ''; gBtn.disabled = true; gUrlValida = null;
         clearTimeout(gPrevTimer); gPrevBox.style.display = 'none'; gPrevImg.removeAttribute('src');
         wEstado.textContent = ''; wPrevBox.style.display = 'none'; wPrevImg.removeAttribute('src');
         wOptSinWeb.disabled = false;
         await pintarLista();
         mostrarPanel('panel-negocios');
-        alert('Solicitud enviada. El equipo de producción la tomará de aquí.');
+        toast('Solicitud enviada. El equipo de producción la tomará de aquí.');
       } catch (ex) {
         err.textContent = ex.message || 'No se pudo enviar.';
         err.style.display = 'block';
@@ -690,14 +778,55 @@
 
     function v(id) { return document.getElementById(id).value.trim(); }
 
+    /* Filtros de la lista (búsqueda + estado + país) */
+    let filtroTexto = '', filtroEstado = '', filtroPais = '';
+    document.getElementById('filtro-buscar').addEventListener('input', e => { filtroTexto = e.target.value.toLowerCase(); pintarLista(); });
+    document.getElementById('filtro-estado').addEventListener('change', e => { filtroEstado = e.target.value; pintarLista(); });
+    document.getElementById('filtro-pais').addEventListener('change', e => { filtroPais = e.target.value; pintarLista(); });
+
+    function clasePipeline(estado) {
+      return estado === 'nueva' ? 'pb-nueva' : estado === 'en revisión' ? 'pb-revision'
+        : estado === 'demo lista' ? 'pb-demo' : estado === 'publicada' ? 'pb-publicada'
+        : estado === 'descartada' ? 'pb-descartada' : '';
+    }
+
+    /* Cambiar estado del pipeline (solo director/admin) */
+    window.cambiarEstado = async (id, select) => {
+      const nuevo = select.value;
+      select.disabled = true;
+      try {
+        await cambiarEstadoSolicitud(id, nuevo);
+        toast('Estado actualizado a "' + nuevo + '".');
+        await pintarLista();
+      } catch (e) {
+        toast(e.message || 'No se pudo cambiar el estado.', 'error');
+        select.disabled = false;
+      }
+    };
+
     async function pintarLista(sesion) {
       sesion = sesion || sesionGlobal;
       const lista = document.getElementById('lista');
-      const items = await listarSolicitudes(sesion);
+      let items = await listarSolicitudes(sesion);
+      // Aplicar filtros en cliente
+      if (filtroTexto) {
+        items = items.filter(s => ((s.nombre_negocio || '') + ' ' + (s.giro || '') + ' ' + (s.telefono || '')).toLowerCase().includes(filtroTexto));
+      }
+      if (filtroEstado) items = items.filter(s => s.estado === filtroEstado);
+      if (filtroPais) items = items.filter(s => s.pais === filtroPais);
+      const puedeMover = sesion && (sesion.rol === 'admin' || sesion.rol === 'director');
       if (!items.length) {
-        lista.innerHTML = '<p class="muted">Aún no hay solicitudes.</p>';
+        lista.innerHTML = '<p class="muted">No hay solicitudes con esos filtros. <button class="btn-linea small" onclick="limpiarFiltros()">Limpiar filtros</button></p>';
         return;
       }
+    window.limpiarFiltros = () => {
+      filtroTexto = ''; filtroEstado = ''; filtroPais = '';
+      document.getElementById('filtro-buscar').value = '';
+      document.getElementById('filtro-estado').value = '';
+      document.getElementById('filtro-pais').value = '';
+      pintarLista();
+    };
+
       const etiquetaPaquete = e => e === 'entregado' ? 'entregado ✓' : e === 'en_revision' ? 'en revisión' : 'en generación…';
       lista.innerHTML = items.map(s => {
         const links = [];
@@ -717,7 +846,7 @@
         <div class="solicitud">
           <div class="sol-head">
             <strong>${esc(s.nombre_negocio)}</strong>
-            <span class="estado ${claseEstado}">${esc(s.estado)}</span>
+            <span class="pipeline-badge ${clasePipeline(s.estado)}">${esc(s.estado)}</span>
           </div>
           ${s.agente_nombre ? `<div>Agente: <strong>${esc(s.agente_nombre)}</strong></div>` : ''}
           <div class="muted small">${esc(s.giro || '')} · ${esc(s.pais || '')} · ${esc(s.telefono || '')}</div>
@@ -727,6 +856,12 @@
           ${links.length ? `<div style="margin-top:6px"><strong class="small">Materiales:</strong> ${links.join(' · ')}</div>` : ''}
           ${s.paquete_estado && s.paquete_estado !== 'pendiente' && s.paquete_estado !== 'entregado' ? `<div class="muted small">Materiales en preparación…</div>` : ''}
           <div class="muted small">${new Date(s.created_at).toLocaleString('es')}</div>
+          ${puedeMover ? `<div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+            <label class="muted small">Estado:</label>
+            <select class="estado-select" onchange="cambiarEstado('${s.id}', this)">
+              ${ESTADOS_SOLICITUD.map(e => `<option value="${e}"${e === s.estado ? ' selected' : ''}>${e}</option>`).join('')}
+            </select>
+          </div>` : ''}
           <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
             ${s.cerrado
               ? `<span class="estado estado-cerrado">✅ Negocio cerrado</span>
@@ -741,20 +876,21 @@
 
     /* ----- Cupones ----- */
     window.copiarCupon = async (codigo) => {
-      try { await navigator.clipboard.writeText(codigo); alert('Código copiado: ' + codigo); }
+      try { await navigator.clipboard.writeText(codigo); toast('Código copiado: ' + codigo); }
       catch (e) { window.prompt('Copia el código:', codigo); }
     };
 
     /* ----- Negocio cerrado ----- */
     window.toggleCierre = async (id, cerrado) => {
       const accion = cerrado ? 'marcar este negocio como CERRADO' : 'reabrir este negocio';
-      if (!window.confirm(`¿Seguro que quieres ${accion}?`)) return;
+      if (!await confirmar('Confirmar', '¿Seguro que quieres ' + accion + '?', 'Sí')) return;
       try {
         await marcarCierre(id, cerrado);
         await pintarLista();
         await pintarStats();
+        toast(cerrado ? 'Negocio marcado como cerrado.' : 'Negocio reabierto.');
       } catch (e) {
-        alert(e.message || 'No se pudo actualizar.');
+        toast(e.message || 'No se pudo actualizar.', 'error');
       }
     };
 
