@@ -88,11 +88,35 @@ async function sesionActual() {
     const s = Memoria.get('portal_sesion');
     return s ? JSON.parse(s) : null;
   }
-  const { data } = await supa.auth.getSession();
-  if (!data.session) return null;
-  const perfil = await obtenerPerfil(data.session.user.id);
-  if (!perfil || !perfil.activo) { await supa.auth.signOut(); return null; }
-  return { id: data.session.user.id, email: data.session.user.email, rol: perfil.rol, nombre: perfil.nombre, pais: perfil.pais || null, comision_pct: perfil.comision_pct };
+  let session = null;
+  try {
+    const { data, error } = await supa.auth.getSession();
+    if (error) throw error;
+    session = data.session;
+  } catch (e) {
+    // Error transitorio (red): no cerrar sesión, solo reportar null temporal.
+    // Quien llama debe distinguir: null aquí puede ser "sin sesión" o "sin red".
+    return null;
+  }
+  if (!session) return null;
+  let perfil = null;
+  try {
+    perfil = await obtenerPerfil(session.user.id);
+  } catch (e) {
+    // Fallo al leer el perfil (red o BD): mantener la sesión de Auth,
+    // devolver sesión parcial marcada para que la UI lo indique.
+    return { id: session.user.id, email: session.user.email, rol: null, nombre: session.user.email, _perfilError: true };
+  }
+  if (!perfil) {
+    // Perfil realmente inexistente: limpiar sesión huérfana.
+    try { await supa.auth.signOut(); } catch (e) {}
+    return null;
+  }
+  if (!perfil.activo) {
+    try { await supa.auth.signOut(); } catch (e) {}
+    return null;
+  }
+  return { id: session.user.id, email: session.user.email, rol: perfil.rol, nombre: perfil.nombre, pais: perfil.pais || null, comision_pct: perfil.comision_pct };
 }
 
 async function salir() {
@@ -101,7 +125,12 @@ async function salir() {
 }
 
 async function obtenerPerfil(uid) {
-  const { data } = await supa.from('perfiles').select('nombre, rol, activo, pais, comision_pct').eq('id', uid).single();
+  const { data, error } = await supa.from('perfiles').select('nombre, rol, activo, pais, comision_pct').eq('id', uid).single();
+  if (error) {
+    // Distinguir "no existe" (PGRST116) de un fallo real.
+    if (error.code === 'PGRST116') return null;
+    throw new Error('No se pudo leer tu perfil: ' + (error.message || 'error de red'));
+  }
   return data;
 }
 
@@ -111,20 +140,31 @@ function esAdmin(sesion) { return sesion && (sesion.rol === 'admin' || sesion.ro
 async function crearInvitacion(nombre, email, rol, pais, comision_pct) {
   const sesion = await sesionActual();
   if (!esAdmin(sesion)) throw new Error('Solo el administrador puede invitar agentes.');
+  nombre = (nombre || '').trim();
+  email = (email || '').trim().toLowerCase();
+  if (!nombre) throw new Error('Escribe el nombre del agente.');
+  if (!/.+@.+\..+/.test(email)) throw new Error('Revisa el correo electrónico.');
+  if (!['agente', 'director'].includes(rol)) throw new Error('Rol inválido.');
   if (!pais) throw new Error('Selecciona el país donde trabajará el agente.');
   comision_pct = Number(comision_pct);
   if (!isFinite(comision_pct) || comision_pct < 0 || comision_pct > 100) {
     throw new Error('La comisión debe ser un porcentaje entre 0 y 100.');
   }
+  // Evitar invitaciones duplicadas activas para el mismo correo.
+  const existentes = await listarInvitaciones();
+  if (existentes.some(i => (i.email || '').toLowerCase() === email)) {
+    throw new Error('Ya hay una invitación activa para ese correo. Revócala primero si quieres crear otra.');
+  }
   const token = (crypto.randomUUID ? crypto.randomUUID() : 't' + Date.now() + Math.random().toString(16).slice(2));
+  const expira_en = new Date(Date.now() + 72 * 3600 * 1000).toISOString();
   if (MODO_DEMO) {
     const invs = JSON.parse(Memoria.get('portal_invitaciones') || '[]');
-    invs.unshift({ id: 'i' + Date.now(), email: email.toLowerCase(), nombre, rol, pais, comision_pct, token, usada: false, created_at: new Date().toISOString() });
+    invs.unshift({ id: 'i' + Date.now(), email, nombre, rol, pais, comision_pct, token, usada: false, expira_en, created_at: new Date().toISOString() });
     Memoria.set('portal_invitaciones', JSON.stringify(invs));
     return token;
   }
   const { error } = await supa.from('invitaciones').insert({
-    email: email.toLowerCase(), nombre, rol, pais, comision_pct, token, creada_por: sesion.id
+    email, nombre, rol, pais, comision_pct, token, creada_por: sesion.id, expira_en
   });
   if (error) throw new Error('No se pudo crear la invitación.');
   return token;
@@ -156,11 +196,21 @@ async function cambiarActivoAgente(id, activo) {
   if (error) throw new Error('No se pudo actualizar.');
 }
 
+function invitacionVigente(inv) {
+  if (!inv || inv.usada) return false;
+  if (!inv.expira_en) return true; // invitaciones viejas sin fecha: se consideran vigentes
+  return new Date(inv.expira_en).getTime() > Date.now();
+}
+
 async function listarInvitaciones() {
   if (MODO_DEMO) {
-    return (JSON.parse(Memoria.get('portal_invitaciones') || '[]')).filter(i => !i.usada);
+    return (JSON.parse(Memoria.get('portal_invitaciones') || '[]')).filter(invitacionVigente);
   }
-  const { data } = await supa.from('invitaciones').select('id, email, nombre, rol, pais, comision_pct, token, created_at').eq('usada', false).order('created_at', { ascending: false });
+  const { data } = await supa.from('invitaciones')
+    .select('id, email, nombre, rol, pais, comision_pct, token, expira_en, creada_por, created_at')
+    .eq('usada', false)
+    .gt('expira_en', new Date().toISOString())
+    .order('created_at', { ascending: false });
   return data || [];
 }
 
@@ -297,11 +347,14 @@ async function eliminarUsuarioSistema(id) {
 async function validarInvitacion(token) {
   if (MODO_DEMO) {
     const inv = (JSON.parse(Memoria.get('portal_invitaciones') || '[]'))
-      .find(i => i.token === token && !i.usada);
+      .find(i => i.token === token && invitacionVigente(i));
     return inv ? { email: inv.email, nombre: inv.nombre, rol: inv.rol, pais: inv.pais || null, comision_pct: inv.comision_pct } : null;
   }
   const { data } = await supa.rpc('validar_invitacion', { p_token: token });
-  return (data && data[0]) || null;
+  const inv = (data && data[0]) || null;
+  // El RPC valida existencia y uso; aquí reforzamos expiración por si el RPC no la checa.
+  if (inv && inv.expira_en && new Date(inv.expira_en).getTime() <= Date.now()) return null;
+  return inv;
 }
 
 async function aceptarInvitacion(token, password) {
@@ -434,4 +487,112 @@ async function marcarCierre(id, cerrado) {
     cerrado_en: cerrado ? new Date().toISOString() : null
   }).eq('id', id);
   if (error) throw new Error(error.message || 'No se pudo actualizar.');
+}
+
+/* ---------- Pipeline de estados (U1) ---------- */
+const ESTADOS_SOLICITUD = ['nueva', 'en revisión', 'demo lista', 'publicada', 'descartada'];
+
+async function cambiarEstadoSolicitud(id, nuevoEstado) {
+  if (!ESTADOS_SOLICITUD.includes(nuevoEstado)) throw new Error('Estado inválido.');
+  const sesion = await sesionActual();
+  if (!sesion) throw new Error('Sesión vencida. Entra de nuevo.');
+  // Solo director/admin pueden mover el pipeline (el RLS lo refuerza en la BD).
+  if (!['admin', 'director'].includes(sesion.rol)) throw new Error('Solo tu director puede cambiar el estado.');
+  if (MODO_DEMO) {
+    const todas = JSON.parse(Memoria.get('portal_solicitudes') || '[]');
+    const s = todas.find(x => x.id === id);
+    if (!s) throw new Error('Solicitud no encontrada.');
+    const antes = s.estado;
+    s.estado = nuevoEstado;
+    s.updated_at = new Date().toISOString();
+    Memoria.set('portal_solicitudes', JSON.stringify(todas));
+    registrarAuditoria('cambio_estado', 'solicitudes', id, { estado: antes }, { estado: nuevoEstado });
+    return;
+  }
+  const antes = await supa.from('solicitudes').select('estado').eq('id', id).single();
+  const { error } = await supa.from('solicitudes').update({ estado: nuevoEstado }).eq('id', id);
+  if (error) throw new Error(error.message || 'No se pudo cambiar el estado.');
+  registrarAuditoria('cambio_estado', 'solicitudes', id,
+    { estado: antes && antes.data ? antes.data.estado : null }, { estado: nuevoEstado });
+}
+
+/* ---------- Editar solicitud (F8) ---------- */
+async function editarSolicitud(id, datos) {
+  const sesion = await sesionActual();
+  if (!sesion) throw new Error('Sesión vencida. Entra de nuevo.');
+  if (datos.enlace_google !== undefined) {
+    const v = validarEnlaceGoogle(datos.enlace_google);
+    if (!v.ok) throw new Error(v.msg);
+    datos.enlace_google = v.url;
+  }
+  if (datos.web_actual !== undefined) {
+    const v = validarUrlSitio(datos.web_actual);
+    if (!v.ok) throw new Error(v.msg);
+    datos.web_actual = v.url;
+  }
+  // El agente solo edita sus propias solicitudes y nunca el estado/cierre.
+  delete datos.estado; delete datos.cerrado; delete datos.cerrado_en;
+  delete datos.agente_id; delete datos.agente_nombre;
+  if (MODO_DEMO) {
+    const todas = JSON.parse(Memoria.get('portal_solicitudes') || '[]');
+    const s = todas.find(x => x.id === id);
+    if (!s) throw new Error('Solicitud no encontrada.');
+    if (sesion.rol === 'agente' && s.agente_id !== sesion.id && s.agente_nombre !== sesion.nombre)
+      throw new Error('Solo puedes editar tus propias solicitudes.');
+    Object.assign(s, datos, { updated_at: new Date().toISOString() });
+    Memoria.set('portal_solicitudes', JSON.stringify(todas));
+    return s;
+  }
+  let q = supa.from('solicitudes').update(datos).eq('id', id);
+  if (sesion.rol === 'agente') q = q.eq('agente_id', sesion.id);
+  const { error } = await q;
+  if (error) throw new Error(error.message || 'No se pudo guardar.');
+}
+
+/* ---------- Recuperación de contraseña (F5) ---------- */
+async function recuperarPassword(email) {
+  email = (email || '').trim().toLowerCase();
+  if (!/.+@.+\..+/.test(email)) throw new Error('Escribe un correo válido.');
+  if (MODO_DEMO) return true; // en demo no hay email real
+  const { error } = await supa.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.href.split('?')[0].replace(/[^/]*$/, '') + 'index.html'
+  });
+  // Mensaje genérico: no revelar si el correo existe (S-seguridad).
+  if (error) throw new Error('No se pudo enviar el correo. Intenta de nuevo.');
+  return true;
+}
+
+/* ---------- Auditoría (F2) ---------- */
+async function registrarAuditoria(accion, tabla, registro_id, antes, despues) {
+  try {
+    const sesion = await sesionActual().catch(() => null);
+    const entry = {
+      actor_id: sesion ? sesion.id : null,
+      actor_nombre: sesion ? sesion.nombre : null,
+      accion, tabla, registro_id: String(registro_id || ''),
+      antes: antes || null, despues: despues || null,
+      created_at: new Date().toISOString()
+    };
+    if (MODO_DEMO) {
+      const log = JSON.parse(Memoria.get('portal_audit') || '[]');
+      log.unshift(entry);
+      Memoria.set('portal_audit', JSON.stringify(log.slice(0, 500)));
+      return;
+    }
+    await supa.from('audit_log').insert({
+      actor_id: entry.actor_id, accion, tabla,
+      registro_id: entry.registro_id, antes: entry.antes, despues: entry.despues
+    });
+  } catch (e) { /* la auditoría nunca debe romper la acción principal */ }
+}
+
+async function listarAuditoria(limite) {
+  limite = limite || 100;
+  if (MODO_DEMO) return (JSON.parse(Memoria.get('portal_audit') || '[]')).slice(0, limite);
+  const sesion = await sesionActual();
+  if (!sesion || sesion.rol !== 'admin') throw new Error('Solo el administrador.');
+  const { data, error } = await supa.from('audit_log')
+    .select('*').order('created_at', { ascending: false }).limit(limite);
+  if (error) throw new Error('No se pudo leer la auditoría.');
+  return data || [];
 }
