@@ -150,20 +150,24 @@
 
     <section class="panel" id="panel-stats" style="display:none">
       <h2>📊 Estadísticas</h2>
-      <p class="muted" id="stats-periodo">Tu producción del mes.</p>
+      <p class="muted" id="stats-periodo">Tu producción y tu nivel de comisión.</p>
       <div class="stats-cards">
         <div class="stat-card">
-          <div class="stat-num" id="stat-pedidos">0</div>
-          <div class="stat-label">📝 Pedidos hechos</div>
+          <div class="stat-num" id="stat-ventas">0</div>
+          <div class="stat-label">💰 Ventas cerradas</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-num" id="stat-cerrados">0</div>
-          <div class="stat-label">✅ Negocios cerrados</div>
+        <div class="stat-card" style="border-color:var(--dorado,#e8a33d)">
+          <div class="stat-num" id="stat-nivel">35%</div>
+          <div class="stat-label">Mi comisión actual</div>
         </div>
       </div>
-      <h3>Mi nivel de comisión</h3>
+      <h3>Camino al siguiente nivel</h3>
+      <div id="progreso-nivel"></div>
+      <h3>Mi equipo (para el 70%)</h3>
+      <p class="muted small">Necesitas 10 ventas propias + 1 persona en tu equipo con 3+ ventas para llegar al 70%.</p>
+      <div id="lista-equipo" class="lista"></div>
+      <h3>Todos los niveles</h3>
       <div class="ladder" id="ladder"></div>
-      <div class="ladder-info" id="ladder-info"></div>
     </section>
 
     <section class="panel" id="panel-cupones" style="display:none">
@@ -394,7 +398,7 @@ function confirmar(titulo, mensaje, textoBoton) {
     }
     document.getElementById('btn-salir').onclick = async () => { await salir(); window.location.href = 'index.html'; };
     const items = await pintarLista(sesion);
-    await pintarStats(sesion, items);
+    await pintarStats(sesion);
 
     /* ----- Gestión de agentes (admin/director) ----- */
     document.getElementById('form-invitacion').addEventListener('submit', async (e) => {
@@ -898,55 +902,45 @@ function confirmar(titulo, mensaje, textoBoton) {
     const NIVELES = [30, 35, 40, 45, 50];
     const metaPara = nivel => (nivel - 30) / 5 * 3; // 30→0, 35→3, 40→6, 45→9, 50→12
 
-    async function pintarStats(sesion, items) {
+    async function pintarStats(sesion) {
       sesion = sesion || sesionGlobal;
-      if (!items) items = await listarSolicitudes(sesion);
-      const ahora = new Date();
-      const esEsteMes = f => {
-        if (!f) return false;
-        const d = new Date(f);
-        return d.getFullYear() === ahora.getFullYear() && d.getMonth() === ahora.getMonth();
-      };
-      const cerradosMes = items.filter(s => s.cerrado && esEsteMes(s.cerrado_en));
-      const mesNombre = ahora.toLocaleString('es', { month: 'long' });
+      const box = document.getElementById('progreso-nivel');
+      const equipoBox = document.getElementById('lista-equipo');
+      try {
+        const p = await progresoComision(sesion.id);
+        document.getElementById('stat-ventas').textContent = p.ventas;
+        document.getElementById('stat-nivel').textContent = p.nivel + '%';
+        document.getElementById('stats-periodo').textContent =
+          (sesion.rol !== 'agente' ? 'Producción del equipo.' : 'Tu producción y tu nivel de comisión.');
 
-      document.getElementById('stat-pedidos').textContent = items.length;
-      document.getElementById('stat-cerrados').textContent = cerradosMes.length;
-      document.getElementById('stats-periodo').textContent =
-        (sesion && sesion.rol !== 'agente' ? 'Producción del equipo en ' : 'Tu producción en ') + mesNombre + '.';
+        // Barra de niveles (35/40/50/60/70)
+        document.getElementById('ladder').innerHTML = NIVELES_COMISION.map(n => {
+          const cls = n.pct === p.nivel ? 'nivel actual' : (n.pct < p.nivel ? 'nivel pasado' : 'nivel');
+          return `<div class="${cls}"><span>${n.pct}%</span><small>${esc(n.etiqueta)}</small></div>`;
+        }).join('');
 
-      // Nivel actual según la comisión del agente
-      let comision = sesion && sesion.comision_pct != null ? Number(sesion.comision_pct) : 30;
-      let nivelActual = 30;
-      for (const n of NIVELES) { if (comision >= n) nivelActual = n; }
-      const idx = NIVELES.indexOf(nivelActual);
-      const esMaximo = idx === NIVELES.length - 1;
+        // Progreso al siguiente nivel
+        if (!p.siguiente) {
+          box.innerHTML = `<div class="aviso">🏆 Estás en el nivel máximo (<strong>70%</strong>). ¡A mantenerlo!</div>`;
+        } else {
+          const pct = Math.min(100, Math.round(p.ventas / p.siguiente.ventas * 100));
+          box.innerHTML =
+            `<p>Nivel actual: <strong style="color:#2ECC71">${p.nivel}%</strong> · ` +
+            `Ventas: <strong>${p.ventas} de ${p.siguiente.ventas}</strong></p>` +
+            `<div class="progreso"><div class="progreso-barra" style="width:${pct}%"></div></div>` +
+            `<p class="muted">${esc(p.detalle)}</p>`;
+        }
 
-      // Barra de niveles
-      document.getElementById('ladder').innerHTML = NIVELES.map(n => {
-        const cls = n === nivelActual ? 'nivel actual' : (n < nivelActual ? 'nivel pasado' : 'nivel');
-        return `<div class="${cls}"><span>${n}%</span><small>${metaPara(n)} <span class="muted">neg.</span></small></div>`;
-      }).join('');
-
-      // Progreso al siguiente nivel
-      let info;
-      if (sesion && sesion.rol !== 'agente') {
-        info = `El equipo lleva <strong>${cerradosMes.length}</strong> negocios cerrados en ${mesNombre}.`;
-      } else if (esMaximo) {
-        info = `🏆 Estás en el nivel máximo (<strong>50%</strong>) con <strong>${cerradosMes.length}</strong> negocios cerrados en ${mesNombre}. ¡A mantenerlo!`;
-      } else {
-        const sig = NIVELES[idx + 1];
-        const meta = metaPara(sig);
-        const faltan = Math.max(0, meta - cerradosMes.length);
-        const pct = Math.min(100, Math.round(cerradosMes.length / meta * 100));
-        info = `Nivel actual: <strong style="color:#2ECC71">${nivelActual}%</strong> · ` +
-          `Cerrados en ${mesNombre}: <strong>${cerradosMes.length} de ${meta}</strong><br>` +
-          `<div class="progreso"><div class="progreso-barra" style="width:${pct}%"></div></div>` +
-          (faltan > 0
-            ? `Te faltan <strong>${faltan}</strong> negocio${faltan === 1 ? '' : 's'} para subir al <strong>${sig}%</strong>.`
-            : `🎉 ¡Meta cumplida! Subes al <strong>${sig}%</strong>.`);
+        // Equipo / reclutas
+        equipoBox.innerHTML = p.reclutas.length ? p.reclutas.map(r => {
+          const ok = r.ventas >= 3;
+          return `<div class="solicitud"><div class="sol-head"><strong>${esc(r.nombre)}</strong>` +
+            `<span class="pipeline-badge ${ok ? 'pb-publicada' : 'pb-revision'}">${r.ventas}/3 ventas ${ok ? '✓' : ''}</span></div></div>`;
+        }).join('') : '<p class="muted">Aún no tienes personas en tu equipo. Invítalas desde la sección Agentes.</p>';
+      } catch (e) {
+        box.innerHTML = '<p class="muted">No se pudo cargar tu progreso.</p>';
+        equipoBox.innerHTML = '';
       }
-      document.getElementById('ladder-info').innerHTML = info;
     }
   })();
 </script>
