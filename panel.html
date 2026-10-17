@@ -4,9 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Panel del Agente — New Age Professional Services</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/estilos.css">
 </head>
 <body>
@@ -22,6 +19,7 @@
       <button class="nav-item" data-panel="panel-negocios">💼 <span id="nav-negocios-label">Mis negocios</span></button>
       <button class="nav-item" data-panel="panel-stats">📊 Estadísticas</button>
       <button class="nav-item" data-panel="panel-cupones">🎟️ Cupones</button>
+      <button class="nav-item" data-panel="panel-demos">🎬 Demos</button>
       <button class="nav-item" data-panel="panel-agentes" id="nav-agentes" style="display:none">👥 Agentes</button>
       <button class="nav-item" data-panel="panel-sistema" id="nav-sistema" style="display:none">⚙️ Usuarios de sistema</button>
       <button class="nav-item" data-panel="panel-auditoria" id="nav-auditoria" style="display:none">📋 Auditoría</button>
@@ -224,6 +222,17 @@
       </div>
     </section>
 
+    <section class="panel" id="panel-demos" style="display:none">
+      <h2>🎬 Demos</h2>
+      <p class="muted">Páginas demo de ejemplo por país. Úsalas para mostrarle a tus clientes cómo quedaría su página.</p>
+      <div id="demos-admin-bar" style="display:none;margin-bottom:16px;gap:10px;flex-wrap:wrap">
+        <button class="btn-dorado" id="btn-nuevo-demo">＋ Agregar demo</button>
+        <button class="btn-linea" id="btn-gestionar-paises">⚙️ Países</button>
+      </div>
+      <div class="barra-filtros" id="demos-filtros" style="margin-bottom:16px"></div>
+      <div class="demos-grid" id="demos-grid"></div>
+    </section>
+
     <section class="panel" id="panel-agentes" style="display:none">
       <h2>Agentes</h2>
       <p class="muted">Crea cuentas para tu equipo. Cada agente recibe un enlace para crear su contraseña.</p>
@@ -402,6 +411,7 @@ function confirmar(titulo, mensaje, textoBoton) {
     document.getElementById('btn-salir').onclick = async () => { await salir(); window.location.href = 'index.html'; };
     const items = await pintarLista(sesion);
     await pintarStats(sesion);
+    await pintarDemos(sesion);
 
     /* ----- Gestión de agentes (admin/director) ----- */
     document.getElementById('form-invitacion').addEventListener('submit', async (e) => {
@@ -945,6 +955,187 @@ function confirmar(titulo, mensaje, textoBoton) {
         equipoBox.innerHTML = '';
       }
     }
+
+    /* ----- Demos: galería por país + CRUD (admin/director) ----- */
+    let _demosPaisFiltro = '';
+    let _demosPaisesCache = [];
+
+    async function pintarDemos(sesion) {
+      sesion = sesion || sesionGlobal;
+      const esAdm = sesion.rol === 'admin' || sesion.rol === 'director';
+      document.getElementById('demos-admin-bar').style.display = esAdm ? 'flex' : 'none';
+      const grid = document.getElementById('demos-grid');
+      const filtros = document.getElementById('demos-filtros');
+      try {
+        _demosPaisesCache = await listarPaisesDemo();
+        if (_demosPaisFiltro && !_demosPaisesCache.some(p => p.id === _demosPaisFiltro)) _demosPaisFiltro = '';
+        filtros.innerHTML =
+          `<button class="btn-linea small${!_demosPaisFiltro ? ' activo' : ''}" data-pais="">Todos</button>` +
+          _demosPaisesCache.map(p =>
+            `<button class="btn-linea small${_demosPaisFiltro === p.id ? ' activo' : ''}" data-pais="${p.id}">${esc(p.nombre)}</button>`
+          ).join('');
+        filtros.querySelectorAll('button').forEach(b => {
+          b.onclick = () => { _demosPaisFiltro = b.dataset.pais; pintarDemos(sesion); };
+        });
+        const demos = await listarDemos(_demosPaisFiltro || undefined);
+        const paisNombre = id => {
+          const p = _demosPaisesCache.find(x => x.id === id);
+          return p ? p.nombre : (demos.find(d => d.id && d.pais_id === id) || {}).pais_nombre || '';
+        };
+        grid.innerHTML = demos.length ? demos.map(d => `
+          <div class="demo-card">
+            ${d.imagen_url ? `<img class="demo-img" src="${esc(d.imagen_url)}" alt="${esc(d.titulo)}" loading="lazy" onerror="this.style.display='none'">` : '<div class="demo-img demo-img-vacia">🎬</div>'}
+            <div class="demo-cuerpo">
+              <span class="demo-pais">${esc(d.pais_nombre || paisNombre(d.pais_id))}</span>
+              <strong class="demo-titulo">${esc(d.titulo)}</strong>
+              ${d.descripcion ? `<p class="muted small">${esc(d.descripcion)}</p>` : ''}
+              <div class="demo-acciones">
+                <a class="btn-dorado small" href="${esc(d.url)}" target="_blank" rel="noopener">Ver demo</a>
+                ${esAdm ? `<button class="btn-linea small" onclick="editarDemoUI('${d.id}')">Editar</button>
+                <button class="btn-linea small" onclick="eliminarDemoUI('${d.id}', '${esc(d.titulo).replace(/'/g, "\\'")}')">Borrar</button>` : ''}
+              </div>
+            </div>
+          </div>`).join('')
+          : '<p class="muted">Aún no hay demos aquí.' + (esAdm ? ' Agrega el primero con "＋ Agregar demo".' : '') + '</p>';
+      } catch (e) {
+        grid.innerHTML = '<p class="muted">No se pudieron cargar los demos.</p>';
+      }
+    }
+
+    function modalFormulario(titulo, campos, textoBoton) {
+      return new Promise(resolve => {
+        const fondo = document.createElement('div');
+        fondo.className = 'modal-fondo';
+        fondo.innerHTML =
+          '<div class="modal-caja"><h3>' + esc(titulo) + '</h3>' +
+          campos.map(c =>
+            `<label style="display:block;margin-bottom:10px">${esc(c.etiqueta)}${c.req ? ' *' : ''}` +
+            (c.tipo === 'select'
+              ? `<select id="mf-${c.id}" style="width:100%;margin-top:4px">${c.opciones.map(o => `<option value="${esc(o.valor)}"${o.sel ? ' selected' : ''}>${esc(o.texto)}</option>`).join('')}</select>`
+              : c.tipo === 'textarea'
+              ? `<textarea id="mf-${c.id}" rows="2" style="width:100%;margin-top:4px">${esc(c.valor || '')}</textarea>`
+              : `<input id="mf-${c.id}" type="${c.tipo || 'text'}" value="${esc(c.valor || '')}" placeholder="${esc(c.ph || '')}" style="width:100%;margin-top:4px">`) +
+            '</label>'
+          ).join('') +
+          '<div id="mf-error" class="error" style="display:none;margin-bottom:10px"></div>' +
+          '<div class="modal-botones"><button class="btn-linea" id="mf-cancel">Cancelar</button>' +
+          '<button class="btn-dorado" id="mf-ok">' + esc(textoBoton || 'Guardar') + '</button></div></div>';
+        document.body.appendChild(fondo);
+        const cerrar = v => { fondo.remove(); resolve(v); };
+        fondo.querySelector('#mf-cancel').onclick = () => cerrar(null);
+        fondo.addEventListener('click', e => { if (e.target === fondo) cerrar(null); });
+        fondo.querySelector('#mf-ok').onclick = () => {
+          const vals = {};
+          campos.forEach(c => { vals[c.id] = document.getElementById('mf-' + c.id).value; });
+          cerrar(vals);
+        };
+      });
+    }
+
+    async function demoFormUI(demo) {
+      const paises = _demosPaisesCache.length ? _demosPaisesCache : await listarPaisesDemo();
+      if (!paises.length) { toast('Primero crea un país con "⚙️ Países".', 'error'); return; }
+      const vals = await modalFormulario(demo ? 'Editar demo' : 'Agregar demo', [
+        { id: 'titulo', etiqueta: 'Título', req: 1, valor: demo?.titulo, ph: 'Ej. Restaurante mexicano' },
+        { id: 'url', etiqueta: 'URL del demo', req: 1, valor: demo?.url, ph: 'https://…' },
+        { id: 'pais_id', etiqueta: 'País', tipo: 'select', req: 1,
+          opciones: paises.map(p => ({ valor: p.id, texto: p.nombre, sel: (demo ? demo.pais_id : _demosPaisFiltro) === p.id })) },
+        { id: 'descripcion', etiqueta: 'Descripción', tipo: 'textarea', valor: demo?.descripcion, ph: 'Qué muestra este demo…' },
+        { id: 'imagen_url', etiqueta: 'URL de imagen (miniatura)', valor: demo?.imagen_url, ph: 'https://… (opcional)' }
+      ], demo ? 'Guardar' : 'Agregar');
+      if (!vals) return;
+      try {
+        if (demo) await editarDemo(demo.id, vals); else await crearDemo(vals);
+        toast(demo ? 'Demo actualizado.' : 'Demo agregado.');
+        await pintarDemos();
+      } catch (ex) {
+        toast(ex.message || 'No se pudo guardar.', 'error');
+      }
+    }
+
+    window.editarDemoUI = async (id) => {
+      try {
+        const demos = await listarDemos();
+        const d = demos.find(x => x.id === id);
+        if (!d) { toast('Demo no encontrado.', 'error'); return; }
+        await demoFormUI(d);
+      } catch (e) { toast('No se pudo cargar.', 'error'); }
+    };
+
+    window.eliminarDemoUI = async (id, titulo) => {
+      if (!await confirmar('Borrar demo', '¿Borrar "' + titulo + '"? Esta acción no se puede deshacer.', 'Borrar')) return;
+      try {
+        await eliminarDemo(id);
+        toast('Demo borrado.');
+        await pintarDemos();
+      } catch (ex) { toast(ex.message || 'No se pudo borrar.', 'error'); }
+    };
+
+    document.getElementById('btn-nuevo-demo').onclick = () => demoFormUI(null);
+
+    /* Gestión de países (secciones) */
+    document.getElementById('btn-gestionar-paises').onclick = async () => {
+      const fondo = document.createElement('div');
+      fondo.className = 'modal-fondo';
+      const dibujar = async () => {
+        let paises = [];
+        try { paises = await listarTodosPaisesDemo(); } catch (e) { paises = []; }
+        fondo.querySelector('#mp-lista').innerHTML = paises.length ? paises.map(p => `
+          <div class="solicitud" style="margin-bottom:8px">
+            <div class="sol-head"><strong>${esc(p.nombre)}</strong>
+              <span class="muted small">${p.activo ? 'visible' : 'oculto'}</span></div>
+            <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn-linea small" data-act="ren" data-id="${p.id}">Renombrar</button>
+              <button class="btn-linea small" data-act="tog" data-id="${p.id}">${p.activo ? 'Ocultar' : 'Mostrar'}</button>
+              <button class="btn-linea small" data-act="del" data-id="${p.id}">Borrar</button>
+            </div>
+          </div>`).join('') : '<p class="muted">No hay países.</p>';
+        fondo.querySelectorAll('#mp-lista button').forEach(b => {
+          b.onclick = async () => {
+            const id = b.dataset.id, act = b.dataset.act;
+            try {
+              if (act === 'del') {
+                const p = paises.find(x => x.id === id);
+                const nDemos = (await listarDemos(id)).length;
+                if (!await confirmar('Borrar país', '¿Borrar "' + (p ? p.nombre : '') + '"?' + (nDemos ? ` También se borrarán sus ${nDemos} demo(s).` : '') + ' No se puede deshacer.', 'Borrar')) return;
+                await eliminarPaisDemo(id);
+                toast('País borrado.');
+              } else if (act === 'tog') {
+                const p = paises.find(x => x.id === id);
+                await editarPaisDemo(id, { activo: !p.activo });
+              } else if (act === 'ren') {
+                const p = paises.find(x => x.id === id);
+                const vals = await modalFormulario('Renombrar país', [{ id: 'nombre', etiqueta: 'Nombre', req: 1, valor: p.nombre }], 'Guardar');
+                if (!vals) return;
+                await editarPaisDemo(id, { nombre: vals.nombre });
+              }
+              await dibujar();
+              await pintarDemos();
+            } catch (ex) { toast(ex.message || 'No se pudo completar.', 'error'); }
+          };
+        });
+      };
+      fondo.innerHTML =
+        '<div class="modal-caja"><h3>Países</h3>' +
+        '<div id="mp-lista" style="max-height:40vh;overflow:auto;margin-bottom:12px"></div>' +
+        '<div style="display:flex;gap:8px;margin-bottom:16px"><input id="mp-nuevo" placeholder="Nuevo país…" style="flex:1">' +
+        '<button class="btn-dorado" id="mp-agregar">Agregar</button></div>' +
+        '<div class="modal-botones"><button class="btn-linea" id="mp-cerrar">Cerrar</button></div></div>';
+      document.body.appendChild(fondo);
+      fondo.querySelector('#mp-cerrar').onclick = () => fondo.remove();
+      fondo.addEventListener('click', e => { if (e.target === fondo) fondo.remove(); });
+      fondo.querySelector('#mp-agregar').onclick = async () => {
+        const nombre = fondo.querySelector('#mp-nuevo').value;
+        try {
+          await crearPaisDemo(nombre);
+          fondo.querySelector('#mp-nuevo').value = '';
+          toast('País agregado.');
+          await dibujar();
+          await pintarDemos();
+        } catch (ex) { toast(ex.message || 'No se pudo agregar.', 'error'); }
+      };
+      await dibujar();
+    };
   })();
 </script>
 </body>
