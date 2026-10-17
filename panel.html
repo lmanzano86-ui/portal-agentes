@@ -224,7 +224,7 @@
 
     <section class="panel" id="panel-demos" style="display:none">
       <h2>🎬 Demos</h2>
-      <p class="muted">Páginas demo de ejemplo por país. Úsalas para mostrarle a tus clientes cómo quedaría su página.</p>
+      <p class="muted">Páginas demo por país: las que agregues aquí + las de tus solicitudes automáticamente.</p>
       <div id="demos-admin-bar" style="display:none;margin-bottom:16px;gap:10px;flex-wrap:wrap">
         <button class="btn-dorado" id="btn-nuevo-demo">＋ Agregar demo</button>
         <button class="btn-linea" id="btn-gestionar-paises">⚙️ Países</button>
@@ -978,11 +978,22 @@ function confirmar(titulo, mensaje, textoBoton) {
           b.onclick = () => { _demosPaisFiltro = b.dataset.pais; pintarDemos(sesion); };
         });
         const demos = await listarDemos(_demosPaisFiltro || undefined);
+        /* Demos automáticos: los "Ver demo" de las solicitudes (conectado a la página principal) */
+        let demosSol = [];
+        try {
+          const sols = await listarSolicitudes(sesion);
+          demosSol = sols.filter(s => s.demo_url);
+          if (_demosPaisFiltro) {
+            const pSel = _demosPaisesCache.find(x => x.id === _demosPaisFiltro);
+            const nombreSel = pSel ? pSel.nombre : '';
+            demosSol = demosSol.filter(s => (s.pais || '') === nombreSel);
+          }
+        } catch (e) { demosSol = []; }
         const paisNombre = id => {
           const p = _demosPaisesCache.find(x => x.id === id);
-          return p ? p.nombre : (demos.find(d => d.id && d.pais_id === id) || {}).pais_nombre || '';
+          return p ? p.nombre : '';
         };
-        grid.innerHTML = demos.length ? demos.map(d => `
+        const tarjetasManuales = demos.map(d => `
           <div class="demo-card">
             ${d.imagen_url ? `<img class="demo-img" src="${esc(d.imagen_url)}" alt="${esc(d.titulo)}" loading="lazy" onerror="this.style.display='none'">` : '<div class="demo-img demo-img-vacia">🎬</div>'}
             <div class="demo-cuerpo">
@@ -995,7 +1006,21 @@ function confirmar(titulo, mensaje, textoBoton) {
                 <button class="btn-linea small" onclick="eliminarDemoUI('${d.id}', '${esc(d.titulo).replace(/'/g, "\\'")}')">Borrar</button>` : ''}
               </div>
             </div>
-          </div>`).join('')
+          </div>`);
+        const tarjetasSol = demosSol.map(s => `
+          <div class="demo-card">
+            <div class="demo-img demo-img-vacia">🏢</div>
+            <div class="demo-cuerpo">
+              <span class="demo-pais">${esc(s.pais || '')} · de solicitud</span>
+              <strong class="demo-titulo">${esc(s.nombre_negocio || 'Sin nombre')}</strong>
+              ${s.giro ? `<p class="muted small">${esc(s.giro)}</p>` : ''}
+              <div class="demo-acciones">
+                <a class="btn-dorado small" href="${esc(s.demo_url)}" target="_blank" rel="noopener">Ver demo</a>
+              </div>
+            </div>
+          </div>`);
+        grid.innerHTML = (tarjetasManuales.length || tarjetasSol.length)
+          ? tarjetasManuales.join('') + tarjetasSol.join('')
           : '<p class="muted">Aún no hay demos aquí.' + (esAdm ? ' Agrega el primero con "＋ Agregar demo".' : '') + '</p>';
       } catch (e) {
         grid.innerHTML = '<p class="muted">No se pudieron cargar los demos.</p>';
