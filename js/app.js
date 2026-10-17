@@ -562,6 +562,70 @@ async function recuperarPassword(email) {
   return true;
 }
 
+/* ---------- Sistema de comisiones por niveles ---------- */
+const NIVELES_COMISION = [
+  { pct: 35, ventas: 0,  etiqueta: 'Inicio' },
+  { pct: 40, ventas: 3,  etiqueta: '3 ventas' },
+  { pct: 50, ventas: 5,  etiqueta: '5 ventas' },
+  { pct: 60, ventas: 8,  etiqueta: '8 ventas' },
+  { pct: 70, ventas: 10, etiqueta: '10 ventas + 1 recluta con 3 ventas', requiereRecluta: true },
+];
+
+function calcularNivel(ventas, reclutasValidos) {
+  if (ventas >= 10 && reclutasValidos >= 1) return 70;
+  if (ventas >= 8) return 60;
+  if (ventas >= 5) return 50;
+  if (ventas >= 3) return 40;
+  return 35;
+}
+
+/* Devuelve { ventas, nivel, siguiente, faltanVentas, reclutas, reclutasValidos, faltaRecluta } */
+async function progresoComision(agenteId) {
+  const sesion = await sesionActual();
+  const id = agenteId || (sesion && sesion.id);
+  if (!id) throw new Error('Sin sesión.');
+  let ventas = 0, reclutas = [];
+  if (MODO_DEMO) {
+    const todas = JSON.parse(Memoria.get('portal_solicitudes') || '[]');
+    ventas = todas.filter(s => s.cerrado && (s.agente_id === id || s.agente_nombre === (sesion && sesion.nombre))).length;
+    const ps = JSON.parse(Memoria.get('portal_perfiles') || '[]');
+    reclutas = ps.filter(p => p.reclutado_por === id).map(p => ({
+      id: p.id, nombre: p.nombre,
+      ventas: todas.filter(s => s.cerrado && s.agente_id === p.id).length
+    }));
+  } else {
+    const { data, error } = await supa.rpc('stats_agente', { p_agente_id: id });
+    if (error) throw new Error('No se pudieron cargar tus ventas.');
+    ventas = (data && data.ventas) || 0;
+    reclutas = (data && data.reclutas) || [];
+  }
+  const reclutasValidos = reclutas.filter(r => r.ventas >= 3).length;
+  const nivel = calcularNivel(ventas, reclutasValidos);
+  const idx = NIVELES_COMISION.findIndex(n => n.pct === nivel);
+  const siguiente = NIVELES_COMISION[idx + 1] || null;
+  let faltanVentas = 0, faltaRecluta = false, detalle = '';
+  if (siguiente) {
+    faltanVentas = Math.max(0, siguiente.ventas - ventas);
+    if (siguiente.requiereRecluta) {
+      faltaRecluta = reclutasValidos < 1;
+      const partes = [];
+      if (faltanVentas > 0) partes.push('te faltan ' + faltanVentas + ' venta' + (faltanVentas === 1 ? '' : 's') + ' propia' + (faltanVentas === 1 ? '' : 's'));
+      if (faltaRecluta) {
+        const mejor = reclutas.length ? Math.max.apply(null, reclutas.map(r => r.ventas)) : 0;
+        partes.push(reclutas.length
+          ? 'tu mejor recluta lleva ' + mejor + '/3 ventas'
+          : 'aún no tienes reclutas en tu equipo');
+      }
+      detalle = partes.length ? 'Para el 70%: ' + partes.join(' y ') + '.' : '¡Listo para el 70%!';
+    } else {
+      detalle = faltanVentas > 0
+        ? 'Te faltan ' + faltanVentas + ' venta' + (faltanVentas === 1 ? '' : 's') + ' para el ' + siguiente.pct + '%.'
+        : '¡Nivel alcanzado!';
+    }
+  }
+  return { ventas, nivel, siguiente, faltanVentas, reclutas, reclutasValidos, faltaRecluta, detalle };
+}
+
 /* ---------- Auditoría (F2) ---------- */
 async function registrarAuditoria(accion, tabla, registro_id, antes, despues) {
   try {
@@ -595,4 +659,176 @@ async function listarAuditoria(limite) {
     .select('*').order('created_at', { ascending: false }).limit(limite);
   if (error) throw new Error('No se pudo leer la auditoría.');
   return data || [];
+}
+
+/* ---------- Demos: secciones por país + tarjetas ---------- */
+const DEMOS_PAISES_SEED = [
+  { id: 'dp-us', nombre: 'Estados Unidos', orden: 1, activo: true },
+  { id: 'dp-es', nombre: 'España', orden: 2, activo: true },
+  { id: 'dp-br', nombre: 'Brasil', orden: 3, activo: true },
+  { id: 'dp-nl', nombre: 'Países Bajos', orden: 4, activo: true }
+];
+
+function _demosMem() {
+  let paises = JSON.parse(Memoria.get('portal_demos_paises') || 'null');
+  if (!paises) { paises = DEMOS_PAISES_SEED.slice(); Memoria.set('portal_demos_paises', JSON.stringify(paises)); }
+  const demos = JSON.parse(Memoria.get('portal_demos') || '[]');
+  return { paises, demos };
+}
+function _demosMemGuardar(paises, demos) {
+  Memoria.set('portal_demos_paises', JSON.stringify(paises));
+  Memoria.set('portal_demos', JSON.stringify(demos));
+}
+
+async function listarPaisesDemo() {
+  if (MODO_DEMO) return _demosMem().paises.filter(p => p.activo).sort((a, b) => a.orden - b.orden);
+  const { data, error } = await supa.from('demos_paises').select('*').eq('activo', true).order('orden');
+  if (error) throw new Error('No se pudieron cargar los países.');
+  return data || [];
+}
+
+async function listarTodosPaisesDemo() {
+  const sesion = await sesionActual();
+  if (!esAdmin(sesion)) throw new Error('Sin permiso.');
+  if (MODO_DEMO) return _demosMem().paises.sort((a, b) => a.orden - b.orden);
+  const { data, error } = await supa.from('demos_paises').select('*').order('orden');
+  if (error) throw new Error('No se pudieron cargar los países.');
+  return data || [];
+}
+
+async function crearPaisDemo(nombre) {
+  const sesion = await sesionActual();
+  if (!esAdmin(sesion)) throw new Error('Sin permiso.');
+  nombre = (nombre || '').trim();
+  if (!nombre) throw new Error('Escribe el nombre del país.');
+  if (MODO_DEMO) {
+    const { paises, demos } = _demosMem();
+    if (paises.some(p => p.nombre.toLowerCase() === nombre.toLowerCase())) throw new Error('Ese país ya existe.');
+    const maxOrden = paises.reduce((m, p) => Math.max(m, p.orden || 0), 0);
+    paises.push({ id: 'dp-' + Date.now(), nombre, orden: maxOrden + 1, activo: true });
+    _demosMemGuardar(paises, demos);
+    return;
+  }
+  const { data: ex } = await supa.from('demos_paises').select('orden').order('orden', { ascending: false }).limit(1);
+  const orden = ex && ex[0] ? (ex[0].orden || 0) + 1 : 1;
+  const { error } = await supa.from('demos_paises').insert({ nombre, orden });
+  if (error) throw new Error(error.code === '23505' ? 'Ese país ya existe.' : 'No se pudo crear el país.');
+}
+
+async function editarPaisDemo(id, campos) {
+  const sesion = await sesionActual();
+  if (!esAdmin(sesion)) throw new Error('Sin permiso.');
+  if (MODO_DEMO) {
+    const { paises, demos } = _demosMem();
+    const p = paises.find(x => x.id === id);
+    if (!p) throw new Error('País no encontrado.');
+    if (campos.nombre !== undefined) {
+      const nombre = (campos.nombre || '').trim();
+      if (!nombre) throw new Error('Escribe el nombre del país.');
+      if (paises.some(x => x.id !== id && x.nombre.toLowerCase() === nombre.toLowerCase())) throw new Error('Ese país ya existe.');
+      p.nombre = nombre;
+    }
+    if (campos.activo !== undefined) p.activo = !!campos.activo;
+    _demosMemGuardar(paises, demos);
+    return;
+  }
+  const permitido = {};
+  if (campos.nombre !== undefined) permitido.nombre = (campos.nombre || '').trim();
+  if (campos.activo !== undefined) permitido.activo = !!campos.activo;
+  const { error } = await supa.from('demos_paises').update(permitido).eq('id', id);
+  if (error) throw new Error(error.code === '23505' ? 'Ese país ya existe.' : 'No se pudo guardar.');
+}
+
+async function eliminarPaisDemo(id) {
+  const sesion = await sesionActual();
+  if (!esAdmin(sesion)) throw new Error('Sin permiso.');
+  if (MODO_DEMO) {
+    const { paises, demos } = _demosMem();
+    _demosMemGuardar(paises.filter(p => p.id !== id), demos.filter(d => d.pais_id !== id));
+    return;
+  }
+  const { error } = await supa.from('demos_paises').delete().eq('id', id);
+  if (error) throw new Error('No se pudo eliminar el país.');
+}
+
+async function listarDemos(paisId) {
+  if (MODO_DEMO) {
+    let demos = _demosMem().demos.filter(d => d.activo);
+    if (paisId) demos = demos.filter(d => d.pais_id === paisId);
+    return demos.sort((a, b) => (a.orden || 0) - (b.orden || 0));
+  }
+  let q = supa.from('demos').select('*, demos_paises(nombre)').eq('activo', true).order('orden');
+  if (paisId) q = q.eq('pais_id', paisId);
+  const { data, error } = await q;
+  if (error) throw new Error('No se pudieron cargar los demos.');
+  return (data || []).map(d => ({ ...d, pais_nombre: d.demos_paises ? d.demos_paises.nombre : '' }));
+}
+
+async function crearDemo(datos) {
+  const sesion = await sesionActual();
+  if (!esAdmin(sesion)) throw new Error('Sin permiso.');
+  const titulo = (datos.titulo || '').trim();
+  const url = (datos.url || '').trim();
+  if (!titulo) throw new Error('Escribe el título del demo.');
+  if (!url) throw new Error('Pega la URL del demo.');
+  if (!datos.pais_id) throw new Error('Selecciona el país.');
+  if (MODO_DEMO) {
+    const { paises, demos } = _demosMem();
+    const maxOrden = demos.filter(d => d.pais_id === datos.pais_id).reduce((m, d) => Math.max(m, d.orden || 0), 0);
+    demos.push({
+      id: 'd' + Date.now(), pais_id: datos.pais_id, titulo, url,
+      descripcion: (datos.descripcion || '').trim() || null,
+      imagen_url: (datos.imagen_url || '').trim() || null,
+      orden: maxOrden + 1, activo: true, created_at: new Date().toISOString()
+    });
+    _demosMemGuardar(paises, demos);
+    return;
+  }
+  const { data: ex } = await supa.from('demos').select('orden').eq('pais_id', datos.pais_id).order('orden', { ascending: false }).limit(1);
+  const orden = ex && ex[0] ? (ex[0].orden || 0) + 1 : 1;
+  const { error } = await supa.from('demos').insert({
+    pais_id: datos.pais_id, titulo, url,
+    descripcion: (datos.descripcion || '').trim() || null,
+    imagen_url: (datos.imagen_url || '').trim() || null, orden
+  });
+  if (error) throw new Error('No se pudo crear el demo.');
+}
+
+async function editarDemo(id, campos) {
+  const sesion = await sesionActual();
+  if (!esAdmin(sesion)) throw new Error('Sin permiso.');
+  if (MODO_DEMO) {
+    const { paises, demos } = _demosMem();
+    const d = demos.find(x => x.id === id);
+    if (!d) throw new Error('Demo no encontrado.');
+    ['titulo', 'url', 'descripcion', 'imagen_url', 'pais_id'].forEach(k => {
+      if (campos[k] !== undefined) d[k] = (campos[k] || '').trim() || (k === 'titulo' || k === 'url' ? d[k] : null);
+    });
+    if (campos.activo !== undefined) d.activo = !!campos.activo;
+    if (!d.titulo) throw new Error('Escribe el título del demo.');
+    if (!d.url) throw new Error('Pega la URL del demo.');
+    _demosMemGuardar(paises, demos);
+    return;
+  }
+  const permitido = {};
+  ['titulo', 'url', 'descripcion', 'imagen_url', 'pais_id'].forEach(k => {
+    if (campos[k] !== undefined) permitido[k] = (campos[k] || '').trim() || null;
+  });
+  if (campos.activo !== undefined) permitido.activo = !!campos.activo;
+  if (permitido.titulo !== undefined && !permitido.titulo) throw new Error('Escribe el título del demo.');
+  if (permitido.url !== undefined && !permitido.url) throw new Error('Pega la URL del demo.');
+  const { error } = await supa.from('demos').update(permitido).eq('id', id);
+  if (error) throw new Error('No se pudo guardar.');
+}
+
+async function eliminarDemo(id) {
+  const sesion = await sesionActual();
+  if (!esAdmin(sesion)) throw new Error('Sin permiso.');
+  if (MODO_DEMO) {
+    const { paises, demos } = _demosMem();
+    _demosMemGuardar(paises, demos.filter(d => d.id !== id));
+    return;
+  }
+  const { error } = await supa.from('demos').delete().eq('id', id);
+  if (error) throw new Error('No se pudo eliminar el demo.');
 }
