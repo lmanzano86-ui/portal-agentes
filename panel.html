@@ -388,6 +388,7 @@
       await pintarAgentes(sesion);
       await pintarSistema(sesion);
     }
+    let _secciones = [], _paginas = []; // estado de Demos: declarar antes de cargar
     if (esAdminTotal(sesion)) {
       document.getElementById('nav-demos').style.display = 'flex';
       initFormDemos();
@@ -627,7 +628,6 @@
     };
 
     /* ----- Demos: secciones por país y páginas (solo admin) ----- */
-    let _secciones = [], _paginas = [];
     async function cargarDemos() {
       const [secs, pags] = await Promise.all([
         supa.from('demo_secciones').select('*').order('orden'),
