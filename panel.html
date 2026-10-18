@@ -337,6 +337,11 @@
         <div class="fila">
           <label style="flex:2">Descripción<input type="text" id="pag-descripcion" placeholder="Descripción corta"></label>
           <label>Orden<input type="number" id="pag-orden" value="0" min="0"></label>
+          <label>Estado<select id="pag-estado">
+            <option value="terminado">✅ Hecho</option>
+            <option value="en_desarrollo">🛠️ En desarrollo</option>
+            <option value="pendiente_dueno">⏳ Pendiente por el dueño</option>
+          </select></label>
         </div>
         <div id="error-pagina" class="error" style="display:none"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -639,14 +644,30 @@
       _paginas = pags.data || [];
       pintarDemos();
     }
+    function badgeEstado(est) {
+      const mapa = {
+        terminado: ['estado-verde', '✅ Hecho'],
+        en_desarrollo: ['estado-azul', '🛠️ En desarrollo'],
+        pendiente_dueno: ['estado-naranja', '⏳ Pendiente por el dueño']
+      };
+      const m = mapa[est] || mapa.terminado;
+      return `<span class="estado ${m[0]}">${m[1]}</span>`;
+    }
     function pintarDemos() {
       const ls = document.getElementById('lista-secciones');
       ls.innerHTML = _secciones.length ? _secciones.map(s => {
         const ps = _paginas.filter(p => p.seccion_id === s.id);
+        const estOf = p => p.estado || 'terminado';
+        const nTer = ps.filter(p => estOf(p) === 'terminado').length;
+        const nDes = ps.filter(p => estOf(p) === 'en_desarrollo').length;
+        const nPen = ps.filter(p => estOf(p) === 'pendiente_dueno').length;
+        const detalle = [`${ps.length} página(s)`];
+        if (nDes) detalle.push(`🛠️ ${nDes} en desarrollo`);
+        if (nPen) detalle.push(`⏳ ${nPen} pendiente`);
         const paginasHtml = ps.length ? ps.map(p =>
           `<div class="solicitud" style="margin-top:8px">`
           + `<div class="sol-head"><strong>${esc(p.titulo)}</strong>`
-          + `<span style="display:flex;gap:6px">`
+          + `<span style="display:flex;gap:6px;align-items:center">${badgeEstado(estOf(p))}`
           + `<button class="btn-linea small" onclick="editarPagina('${p.id}')">Editar</button>`
           + `<button class="btn-linea small" style="color:#c0392b" onclick="eliminarPagina('${p.id}')">Quitar</button>`
           + `</span></div>`
@@ -656,7 +677,7 @@
         ).join('') : '<p class="muted small" style="margin-top:8px">Sin páginas en esta sección.</p>';
         return `<div class="tarjeta" style="margin-bottom:16px">`
           + `<div class="sol-head"><strong style="font-size:17px">${esc(s.bandera || '')} ${esc(s.nombre)}</strong>`
-          + `<span class="muted small">${ps.length} página(s) · orden ${s.orden}</span></div>`
+          + `<span class="muted small">${detalle.join(' · ')} · orden ${s.orden}</span></div>`
           + `<div class="muted small">slug: ${esc(s.slug)}</div>`
           + `<div style="margin:8px 0;display:flex;gap:8px;flex-wrap:wrap">`
           + `<button class="btn-linea small" onclick="editarSeccion('${s.id}')">Editar sección</button>`
@@ -710,6 +731,7 @@
       document.getElementById('pag-url').value = p.url || '';
       document.getElementById('pag-descripcion').value = p.descripcion || '';
       document.getElementById('pag-orden').value = p.orden || 0;
+      document.getElementById('pag-estado').value = p.estado || 'terminado';
       document.getElementById('titulo-form-pagina').textContent = 'Editar página';
       document.getElementById('btn-cancelar-pagina').style.display = 'inline-block';
       window.scrollTo(0, document.getElementById('titulo-form-pagina').offsetTop);
@@ -764,7 +786,8 @@
           titulo: document.getElementById('pag-titulo').value.trim(),
           url: document.getElementById('pag-url').value.trim(),
           descripcion: document.getElementById('pag-descripcion').value.trim(),
-          orden: parseInt(document.getElementById('pag-orden').value, 10) || 0
+          orden: parseInt(document.getElementById('pag-orden').value, 10) || 0,
+          estado: document.getElementById('pag-estado').value
         };
         try {
           const r = id ? await supa.from('demo_paginas').update(datos).eq('id', id)
