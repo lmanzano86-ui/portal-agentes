@@ -349,7 +349,7 @@
           <button type="button" class="btn-linea" id="btn-cancelar-pagina" style="display:none">Cancelar</button>
         </div>
       </form>
-      <p class="muted small" style="margin-top:16px">Al eliminar una página solo se quita su tarjeta del panel — el repositorio del demo en GitHub se conserva.</p>
+      <p class="muted small" style="margin-top:16px">En público solo se muestran las páginas con estado «Hecho» y visibles. «🚫 Ocultar» la quita del frente sin borrarla. Al eliminar una página solo se quita su tarjeta del panel — el repositorio del demo en GitHub se conserva.</p>
     </section>
   </main>
 </div>
@@ -664,17 +664,20 @@
         const detalle = [`${ps.length} página(s)`];
         if (nDes) detalle.push(`🛠️ ${nDes} en desarrollo`);
         if (nPen) detalle.push(`⏳ ${nPen} pendiente`);
-        const paginasHtml = ps.length ? ps.map(p =>
-          `<div class="solicitud" style="margin-top:8px">`
+        const paginasHtml = ps.length ? ps.map(p => {
+          const vis = p.visible !== false;
+          return `<div class="solicitud" style="margin-top:8px;${vis ? '' : 'opacity:.75'}">`
           + `<div class="sol-head"><strong>${esc(p.titulo)}</strong>`
-          + `<span style="display:flex;gap:6px;align-items:center">${badgeEstado(estOf(p))}`
+          + `<span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${badgeEstado(estOf(p))}`
+          + (vis ? '' : `<span class="estado estado-naranja">🚫 Oculto</span>`)
+          + `<button class="btn-linea small" onclick="toggleVisible('${p.id}', ${vis ? 'false' : 'true'})">${vis ? '🚫 Ocultar' : '👁️ Mostrar'}</button>`
           + `<button class="btn-linea small" onclick="editarPagina('${p.id}')">Editar</button>`
           + `<button class="btn-linea small" style="color:#c0392b" onclick="eliminarPagina('${p.id}')">Quitar</button>`
           + `</span></div>`
           + `<div class="muted small">${esc(p.tag || '')} · <a href="${esc(p.url)}" target="_blank" rel="noopener" style="color:var(--dorado-claro);word-break:break-all">${esc(p.url)}</a></div>`
           + (p.descripcion ? `<div class="muted small">${esc(p.descripcion)}</div>` : '')
-          + `</div>`
-        ).join('') : '<p class="muted small" style="margin-top:8px">Sin páginas en esta sección.</p>';
+          + `</div>`;
+        }).join('') : '<p class="muted small" style="margin-top:8px">Sin páginas en esta sección.</p>';
         return `<div class="tarjeta" style="margin-bottom:16px">`
           + `<div class="sol-head"><strong style="font-size:17px">${esc(s.bandera || '')} ${esc(s.nombre)}</strong>`
           + `<span class="muted small">${detalle.join(' · ')} · orden ${s.orden}</span></div>`
@@ -690,6 +693,11 @@
       document.getElementById('pag-seccion').innerHTML =
         _secciones.map(s => `<option value="${s.id}">${esc((s.bandera || '') + ' ' + s.nombre)}</option>`).join('');
     }
+    window.toggleVisible = async (id, valor) => {
+      const { error } = await supa.from('demo_paginas').update({ visible: valor }).eq('id', id);
+      if (error) { alert(error.message); return; }
+      await cargarDemos();
+    };
     window.nuevaPaginaEn = (seccionId) => {
       document.getElementById('form-pagina').reset();
       document.getElementById('pag-id').value = '';
