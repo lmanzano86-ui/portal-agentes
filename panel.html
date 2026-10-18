@@ -19,10 +19,9 @@
       <button class="nav-item" data-panel="panel-negocios">💼 <span id="nav-negocios-label">Mis negocios</span></button>
       <button class="nav-item" data-panel="panel-stats">📊 Estadísticas</button>
       <button class="nav-item" data-panel="panel-cupones">🎟️ Cupones</button>
-      <button class="nav-item" data-panel="panel-demos">🎬 Demos</button>
       <button class="nav-item" data-panel="panel-agentes" id="nav-agentes" style="display:none">👥 Agentes</button>
       <button class="nav-item" data-panel="panel-sistema" id="nav-sistema" style="display:none">⚙️ Usuarios de sistema</button>
-      <button class="nav-item" data-panel="panel-auditoria" id="nav-auditoria" style="display:none">📋 Auditoría</button>
+      <button class="nav-item" data-panel="panel-demos" id="nav-demos" style="display:none">🎬 Demos</button>
     </nav>
     <div class="sidebar-user">
       <div class="sidebar-nombre" id="nombre-agente"></div>
@@ -128,47 +127,25 @@
     <section class="panel" id="panel-negocios" style="display:none">
       <h2 id="titulo-lista">Mis negocios</h2>
       <p class="muted" id="subtitulo-lista" style="display:none">Tus solicitudes y sus materiales: demo, propuesta comercial y contrato.</p>
-      <div class="barra-filtros">
-        <input type="search" id="filtro-buscar" placeholder="Buscar por negocio, giro o teléfono…" autocomplete="off">
-        <select id="filtro-estado">
-          <option value="">Todos los estados</option>
-          <option value="nueva">Nueva</option>
-          <option value="en revisión">En revisión</option>
-          <option value="demo lista">Demo lista</option>
-          <option value="publicada">Publicada</option>
-          <option value="descartada">Descartada</option>
-        </select>
-        <select id="filtro-pais">
-          <option value="">Todos los países</option>
-          <option>Estados Unidos</option>
-          <option>España</option>
-          <option>Brasil</option>
-          <option>Países Bajos</option>
-        </select>
-      </div>
       <div id="lista" class="lista"></div>
     </section>
 
     <section class="panel" id="panel-stats" style="display:none">
       <h2>📊 Estadísticas</h2>
-      <p class="muted" id="stats-periodo">Tu producción y tu nivel de comisión.</p>
+      <p class="muted" id="stats-periodo">Tu producción del mes.</p>
       <div class="stats-cards">
         <div class="stat-card">
-          <div class="stat-num" id="stat-ventas">0</div>
-          <div class="stat-label">💰 Ventas cerradas</div>
+          <div class="stat-num" id="stat-pedidos">0</div>
+          <div class="stat-label">📝 Pedidos hechos</div>
         </div>
-        <div class="stat-card" style="border-color:var(--dorado,#e8a33d)">
-          <div class="stat-num" id="stat-nivel">35%</div>
-          <div class="stat-label">Mi comisión actual</div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-cerrados">0</div>
+          <div class="stat-label">✅ Negocios cerrados</div>
         </div>
       </div>
-      <h3>Camino al siguiente nivel</h3>
-      <div id="progreso-nivel"></div>
-      <h3>Mi equipo (para el 70%)</h3>
-      <p class="muted small">Necesitas 10 ventas propias + 1 persona en tu equipo con 3+ ventas para llegar al 70%.</p>
-      <div id="lista-equipo" class="lista"></div>
-      <h3>Todos los niveles</h3>
+      <h3>Mi nivel de comisión</h3>
       <div class="ladder" id="ladder"></div>
+      <div class="ladder-info" id="ladder-info"></div>
     </section>
 
     <section class="panel" id="panel-cupones" style="display:none">
@@ -220,17 +197,6 @@
           </div>
         </div>
       </div>
-    </section>
-
-    <section class="panel" id="panel-demos" style="display:none">
-      <h2>🎬 Demos</h2>
-      <p class="muted">Páginas demo por país: las que agregues aquí + las de tus solicitudes automáticamente.</p>
-      <div id="demos-admin-bar" style="display:none;margin-bottom:16px;gap:10px;flex-wrap:wrap">
-        <button class="btn-dorado" id="btn-nuevo-demo">＋ Agregar demo</button>
-        <button class="btn-linea" id="btn-gestionar-paises">⚙️ Países</button>
-      </div>
-      <div class="barra-filtros" id="demos-filtros" style="margin-bottom:16px"></div>
-      <div class="demos-grid" id="demos-grid"></div>
     </section>
 
     <section class="panel" id="panel-agentes" style="display:none">
@@ -286,7 +252,7 @@
           </div>
           <div class="fila">
             <label>Contraseña *
-              <input type="password" id="cu-password" required minlength="6" placeholder="Mínimo 6 caracteres" autocomplete="off">
+              <input type="text" id="cu-password" required minlength="6" placeholder="Mínimo 6 caracteres" autocomplete="off">
             </label>
             <label>Rol
               <select id="cu-rol">
@@ -327,46 +293,68 @@
       <div id="lista-sistema" class="lista"></div>
     </section>
 
-    <section class="panel" id="panel-auditoria" style="display:none">
-      <h2>📋 Auditoría</h2>
-      <p class="muted">Registro de cambios importantes: estados, roles, comisiones, activaciones.</p>
-      <div id="lista-auditoria" class="lista"></div>
+    <section class="panel" id="panel-demos" style="display:none">
+      <h2>🎬 Demos</h2>
+      <p class="muted">Secciones por país y páginas de «Mis páginas» y de la página principal. Los cambios se publican al instante.</p>
+      <h3>Secciones de países</h3>
+      <div id="lista-secciones" class="lista"></div>
+      <h3 id="titulo-form-seccion">Nueva sección</h3>
+      <form id="form-seccion">
+        <input type="hidden" id="sec-id">
+        <div class="fila">
+          <label>Slug *<input type="text" id="sec-slug" required placeholder="ej. espana (sin espacios ni acentos)"></label>
+          <label>Nombre *<input type="text" id="sec-nombre" required placeholder="ej. España"></label>
+        </div>
+        <div class="fila">
+          <label>Bandera<input type="text" id="sec-bandera" placeholder="ej. 🇪🇸"></label>
+          <label>Orden<input type="number" id="sec-orden" value="0" min="0"></label>
+        </div>
+        <div class="fila">
+          <label>Título en Mis páginas<input type="text" id="sec-titulo-panel" placeholder="ej. 🇪🇸 Agente España"></label>
+          <label>Subtítulo en Mis páginas<input type="text" id="sec-subtitulo-panel" placeholder="ej. Páginas del agente en España"></label>
+        </div>
+        <div class="fila">
+          <label>Título en página principal<input type="text" id="sec-titulo-publico" placeholder="ej. 🇪🇸 España"></label>
+          <div></div>
+        </div>
+        <div id="error-seccion" class="error" style="display:none"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="submit" class="btn-dorado" id="btn-guardar-seccion">Guardar sección</button>
+          <button type="button" class="btn-linea" id="btn-cancelar-seccion" style="display:none">Cancelar</button>
+        </div>
+      </form>
+      <h3 style="margin-top:28px">Páginas</h3>
+      <div id="lista-paginas" class="lista"></div>
+      <h3 id="titulo-form-pagina">Nueva página</h3>
+      <form id="form-pagina">
+        <input type="hidden" id="pag-id">
+        <div class="fila">
+          <label>Sección *<select id="pag-seccion" required></select></label>
+          <label>Etiqueta<input type="text" id="pag-tag" placeholder="ej. Demo para cliente"></label>
+        </div>
+        <div class="fila">
+          <label>Título *<input type="text" id="pag-titulo" required placeholder="ej. Demo — Panadería X"></label>
+          <label>URL *<input type="url" id="pag-url" required placeholder="https://lmanzano86-ui.github.io/demo-x/"></label>
+        </div>
+        <div class="fila">
+          <label style="flex:2">Descripción<input type="text" id="pag-descripcion" placeholder="Descripción corta"></label>
+          <label>Orden<input type="number" id="pag-orden" value="0" min="0"></label>
+        </div>
+        <div id="error-pagina" class="error" style="display:none"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="submit" class="btn-dorado" id="btn-guardar-pagina">Guardar página</button>
+          <button type="button" class="btn-linea" id="btn-cancelar-pagina" style="display:none">Cancelar</button>
+        </div>
+      </form>
+      <p class="muted small" style="margin-top:16px">Al eliminar una página solo se quita su tarjeta del panel — el repositorio del demo en GitHub se conserva.</p>
     </section>
   </main>
 </div>
-
-<div id="toasts" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
 <script src="js/app.js"></script>
 <script>
-/* ---------- Sistema de toasts (reemplaza alert) ---------- */
-function toast(msg, tipo) {
-  const box = document.getElementById('toasts');
-  const el = document.createElement('div');
-  el.className = 'toast' + (tipo ? ' ' + tipo : '');
-  el.textContent = msg;
-  box.appendChild(el);
-  setTimeout(() => { el.classList.add('salir'); setTimeout(() => el.remove(), 350); }, 3200);
-}
-
-/* ---------- Modal de confirmación (reemplaza confirm) ---------- */
-function confirmar(titulo, mensaje, textoBoton) {
-  return new Promise(resolve => {
-    const fondo = document.createElement('div');
-    fondo.className = 'modal-fondo';
-    fondo.innerHTML =
-      '<div class="modal-caja"><h3>' + esc(titulo) + '</h3><p>' + esc(mensaje) + '</p>' +
-      '<div class="modal-botones"><button class="btn-linea" id="m-cancel">Cancelar</button>' +
-      '<button class="btn-dorado" id="m-ok">' + esc(textoBoton || 'Confirmar') + '</button></div></div>';
-    document.body.appendChild(fondo);
-    const cerrar = v => { fondo.remove(); resolve(v); };
-    fondo.querySelector('#m-cancel').onclick = () => cerrar(false);
-    fondo.querySelector('#m-ok').onclick = () => cerrar(true);
-    fondo.addEventListener('click', e => { if (e.target === fondo) cerrar(false); });
-  });
-}
   (async () => {
     if (MODO_DEMO) document.getElementById('aviso-demo').style.display = 'block';
     const sesion = await sesionActual();
@@ -401,17 +389,21 @@ function confirmar(titulo, mensaje, textoBoton) {
       document.getElementById('nav-agentes').style.display = 'flex';
       await pintarAgentes(sesion);
       await pintarSistema(sesion);
+    }
+    if (esAdminTotal(sesion)) {
+      document.getElementById('nav-demos').style.display = 'flex';
+      initFormDemos();
+      try { await cargarDemos(); }
+      catch (e) {
+        document.getElementById('lista-secciones').innerHTML =
+          '<p class="muted">No se pudieron cargar las demos. Si es la primera vez, corre la migración <b>migracion-2026-10-18-demos.sql</b> en el editor SQL de Supabase.</p>';
+      }
     } else {
       document.getElementById('subtitulo-lista').style.display = 'block';
     }
-    if (sesion.rol === 'admin') {
-      document.getElementById('nav-auditoria').style.display = 'flex';
-      await pintarAuditoria();
-    }
     document.getElementById('btn-salir').onclick = async () => { await salir(); window.location.href = 'index.html'; };
     const items = await pintarLista(sesion);
-    await pintarStats(sesion);
-    await pintarDemos(sesion);
+    await pintarStats(sesion, items);
 
     /* ----- Gestión de agentes (admin/director) ----- */
     document.getElementById('form-invitacion').addEventListener('submit', async (e) => {
@@ -467,7 +459,7 @@ function confirmar(titulo, mensaje, textoBoton) {
           </div>
           <div class="muted small">${esc(a.email || '')}${a.pais ? ' · ' + esc(a.pais) : ''}${a.comision_pct != null ? ' · Comisión ' + esc(a.comision_pct) + '%' : ''}</div>
           <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
-            ${esAdm && a.id !== sesion.id ? `<button class="btn-linea" onclick="toggleAgente('${a.id}', ${a.activo})">${a.activo ? 'Desactivar' : 'Activar'}</button>` : (a.id !== sesion.id ? '<div class="muted small">Solo el administrador puede activar/desactivar.</div>' : '<div class="muted small">Tú</div>')}
+            ${a.id !== sesion.id ? `<button class="btn-linea" onclick="toggleAgente('${a.id}', ${a.activo})">${a.activo ? 'Desactivar' : 'Activar'}</button>` : '<div class="muted small">Tú</div>'}
             ${esAdm && a.id !== sesion.id ? `<button class="btn-linea" onclick="editarAgente('${a.id}')">Editar</button>` : ''}
           </div>
         </div>`).join('') : '<p class="muted">Aún no hay agentes.</p>';
@@ -548,7 +540,7 @@ function confirmar(titulo, mensaje, textoBoton) {
           </label>
         </div>
         <div class="fila">
-          <label>Nueva contraseña (opcional)<input type="password" id="ed-pass-${id}" placeholder="Déjala vacía para no cambiarla" autocomplete="new-password"></label>
+          <label>Nueva contraseña (opcional)<input type="text" id="ed-pass-${id}" placeholder="Déjala vacía para no cambiarla" autocomplete="off"></label>
           <div></div>
         </div>
         <div id="ed-error-${id}" class="error" style="display:none"></div>
@@ -586,37 +578,14 @@ function confirmar(titulo, mensaje, textoBoton) {
 
     window.eliminarAgente = async (id) => {
       const a = window._agentes[id];
-      if (!await confirmar('Eliminar usuario', '¿Eliminar a ' + (a ? a.nombre : id) + '? Esta acción no se puede deshacer.', 'Eliminar')) return;
+      if (!window.confirm('¿Eliminar al usuario ' + (a ? a.nombre : id) + '? Esta acción no se puede deshacer.')) return;
       try {
         await adminEliminarUsuario(id);
         await pintarAgentes();
-        toast('Usuario eliminado.');
       } catch (ex) {
-        toast(ex.message || 'No se pudo eliminar.', 'error');
+        alert(ex.message || 'No se pudo eliminar.');
       }
     };
-
-    /* ----- Auditoría (solo admin) ----- */
-    async function pintarAuditoria() {
-      const box = document.getElementById('lista-auditoria');
-      try {
-        const items = await listarAuditoria(100);
-        box.innerHTML = items.length ? items.map(a => `
-          <div class="solicitud">
-            <div class="sol-head">
-              <strong>${esc(a.accion)}</strong>
-              <span class="muted small">${new Date(a.created_at).toLocaleString('es')}</span>
-            </div>
-            <div class="muted small">${esc(a.tabla)}${a.registro_id ? ' · ' + esc(a.registro_id.slice(0, 8)) : ''}${a.actor_nombre ? ' · por ' + esc(a.actor_nombre) : ''}</div>
-            ${a.antes || a.despues ? `<div class="muted small" style="margin-top:4px">` +
-              (a.antes ? 'Antes: <code>' + esc(JSON.stringify(a.antes)) + '</code> ' : '') +
-              (a.despues ? '→ Después: <code>' + esc(JSON.stringify(a.despues)) + '</code>' : '') + `</div>` : ''}
-          </div>`).join('')
-          : '<p class="muted">Aún no hay eventos registrados.</p>';
-      } catch (e) {
-        box.innerHTML = '<p class="muted">No se pudo cargar la auditoría.</p>';
-      }
-    }
 
     /* ----- Usuarios de sistema (solo la cuenta de Lester) ----- */
     async function pintarSistema(sesion) {
@@ -640,16 +609,166 @@ function confirmar(titulo, mensaje, textoBoton) {
       }
     }
     window.eliminarSistema = async (id, email) => {
-      if (!await confirmar('Eliminar usuario de sistema', '¿Eliminar ' + email + '? Esta acción no se puede deshacer.', 'Eliminar')) return;
+      if (!window.confirm(`¿Eliminar el usuario de sistema ${email}? Esta acción no se puede deshacer.`)) return;
       try {
         await eliminarUsuarioSistema(id);
         const sesion = await sesionActual();
         await pintarSistema(sesion);
-        toast('Usuario de sistema eliminado.');
       } catch (e) {
-        toast(e.message || 'No se pudo eliminar.', 'error');
+        alert(e.message || 'No se pudo eliminar.');
       }
     };
+
+    /* ----- Demos: secciones por país y páginas (solo admin) ----- */
+    let _secciones = [], _paginas = [];
+    async function cargarDemos() {
+      const [secs, pags] = await Promise.all([
+        supa.from('demo_secciones').select('*').order('orden'),
+        supa.from('demo_paginas').select('*').order('orden')
+      ]);
+      if (secs.error) throw secs.error;
+      if (pags.error) throw pags.error;
+      _secciones = secs.data || [];
+      _paginas = pags.data || [];
+      pintarDemos();
+    }
+    function pintarDemos() {
+      const ls = document.getElementById('lista-secciones');
+      ls.innerHTML = _secciones.length ? _secciones.map(s => {
+        const n = _paginas.filter(p => p.seccion_id === s.id).length;
+        return `<div class="solicitud"><div class="sol-head"><strong>${esc(s.bandera || '')} ${esc(s.nombre)}</strong>`
+          + `<span class="muted small">${n} página(s) · orden ${s.orden}</span></div>`
+          + `<div class="muted small">slug: ${esc(s.slug)}</div>`
+          + `<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">`
+          + `<button class="btn-linea" onclick="editarSeccion('${s.id}')">Editar</button>`
+          + `<button class="btn-linea" style="color:#c0392b" onclick="eliminarSeccion('${s.id}')">Eliminar</button>`
+          + `</div></div>`;
+      }).join('') : '<p class="muted">No hay secciones.</p>';
+      document.getElementById('pag-seccion').innerHTML =
+        _secciones.map(s => `<option value="${s.id}">${esc((s.bandera || '') + ' ' + s.nombre)}</option>`).join('');
+      const lp = document.getElementById('lista-paginas');
+      const html = _secciones.map(s => {
+        const ps = _paginas.filter(p => p.seccion_id === s.id);
+        if (!ps.length) return '';
+        return `<h4 style="margin:14px 0 6px">${esc((s.bandera || '') + ' ' + s.nombre)}</h4>` + ps.map(p =>
+          `<div class="solicitud"><div class="sol-head"><strong>${esc(p.titulo)}</strong></div>`
+          + `<div class="muted small">${esc(p.tag || '')} · <a href="${esc(p.url)}" target="_blank" rel="noopener" style="color:var(--dorado-claro);word-break:break-all">${esc(p.url)}</a></div>`
+          + (p.descripcion ? `<div class="muted small">${esc(p.descripcion)}</div>` : '')
+          + `<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">`
+          + `<button class="btn-linea" onclick="editarPagina('${p.id}')">Editar</button>`
+          + `<button class="btn-linea" style="color:#c0392b" onclick="eliminarPagina('${p.id}')">Eliminar</button>`
+          + `</div></div>`
+        ).join('');
+      }).join('');
+      lp.innerHTML = html || '<p class="muted">No hay páginas.</p>';
+    }
+    window.editarSeccion = (id) => {
+      const s = _secciones.find(x => x.id === id);
+      if (!s) return;
+      document.getElementById('sec-id').value = s.id;
+      document.getElementById('sec-slug').value = s.slug || '';
+      document.getElementById('sec-nombre').value = s.nombre || '';
+      document.getElementById('sec-bandera').value = s.bandera || '';
+      document.getElementById('sec-orden').value = s.orden || 0;
+      document.getElementById('sec-titulo-panel').value = s.titulo_panel || '';
+      document.getElementById('sec-subtitulo-panel').value = s.subtitulo_panel || '';
+      document.getElementById('sec-titulo-publico').value = s.titulo_publico || '';
+      document.getElementById('titulo-form-seccion').textContent = 'Editar sección';
+      document.getElementById('btn-cancelar-seccion').style.display = 'inline-block';
+      window.scrollTo(0, document.getElementById('titulo-form-seccion').offsetTop);
+    };
+    window.eliminarSeccion = async (id) => {
+      const s = _secciones.find(x => x.id === id);
+      const n = _paginas.filter(p => p.seccion_id === id).length;
+      if (!window.confirm(`¿Eliminar la sección "${s ? s.nombre : id}"?${n ? ` También se eliminarán sus ${n} página(s).` : ''} Esta acción no se puede deshacer.`)) return;
+      const { error } = await supa.from('demo_secciones').delete().eq('id', id);
+      if (error) { alert(error.message); return; }
+      await cargarDemos();
+    };
+    window.editarPagina = (id) => {
+      const p = _paginas.find(x => x.id === id);
+      if (!p) return;
+      document.getElementById('pag-id').value = p.id;
+      document.getElementById('pag-seccion').value = p.seccion_id || '';
+      document.getElementById('pag-tag').value = p.tag || '';
+      document.getElementById('pag-titulo').value = p.titulo || '';
+      document.getElementById('pag-url').value = p.url || '';
+      document.getElementById('pag-descripcion').value = p.descripcion || '';
+      document.getElementById('pag-orden').value = p.orden || 0;
+      document.getElementById('titulo-form-pagina').textContent = 'Editar página';
+      document.getElementById('btn-cancelar-pagina').style.display = 'inline-block';
+      window.scrollTo(0, document.getElementById('titulo-form-pagina').offsetTop);
+    };
+    window.eliminarPagina = async (id) => {
+      const p = _paginas.find(x => x.id === id);
+      if (!window.confirm(`¿Quitar "${p ? p.titulo : id}" del panel? Solo se elimina la tarjeta — el demo en GitHub se conserva.`)) return;
+      const { error } = await supa.from('demo_paginas').delete().eq('id', id);
+      if (error) { alert(error.message); return; }
+      await cargarDemos();
+    };
+    function initFormDemos() {
+      document.getElementById('form-seccion').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const err = document.getElementById('error-seccion');
+        err.style.display = 'none';
+        const id = document.getElementById('sec-id').value;
+        const datos = {
+          slug: document.getElementById('sec-slug').value.trim().toLowerCase().replace(/\s+/g, '_'),
+          nombre: document.getElementById('sec-nombre').value.trim(),
+          bandera: document.getElementById('sec-bandera').value.trim(),
+          orden: parseInt(document.getElementById('sec-orden').value, 10) || 0,
+          titulo_panel: document.getElementById('sec-titulo-panel').value.trim(),
+          subtitulo_panel: document.getElementById('sec-subtitulo-panel').value.trim(),
+          titulo_publico: document.getElementById('sec-titulo-publico').value.trim()
+        };
+        try {
+          const r = id ? await supa.from('demo_secciones').update(datos).eq('id', id)
+                       : await supa.from('demo_secciones').insert(datos);
+          if (r.error) throw r.error;
+          e.target.reset();
+          document.getElementById('sec-id').value = '';
+          document.getElementById('titulo-form-seccion').textContent = 'Nueva sección';
+          document.getElementById('btn-cancelar-seccion').style.display = 'none';
+          await cargarDemos();
+        } catch (ex) { err.textContent = ex.message || 'No se pudo guardar.'; err.style.display = 'block'; }
+      });
+      document.getElementById('btn-cancelar-seccion').onclick = () => {
+        document.getElementById('form-seccion').reset();
+        document.getElementById('sec-id').value = '';
+        document.getElementById('titulo-form-seccion').textContent = 'Nueva sección';
+        document.getElementById('btn-cancelar-seccion').style.display = 'none';
+      };
+      document.getElementById('form-pagina').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const err = document.getElementById('error-pagina');
+        err.style.display = 'none';
+        const id = document.getElementById('pag-id').value;
+        const datos = {
+          seccion_id: document.getElementById('pag-seccion').value,
+          tag: document.getElementById('pag-tag').value.trim(),
+          titulo: document.getElementById('pag-titulo').value.trim(),
+          url: document.getElementById('pag-url').value.trim(),
+          descripcion: document.getElementById('pag-descripcion').value.trim(),
+          orden: parseInt(document.getElementById('pag-orden').value, 10) || 0
+        };
+        try {
+          const r = id ? await supa.from('demo_paginas').update(datos).eq('id', id)
+                       : await supa.from('demo_paginas').insert(datos);
+          if (r.error) throw r.error;
+          e.target.reset();
+          document.getElementById('pag-id').value = '';
+          document.getElementById('titulo-form-pagina').textContent = 'Nueva página';
+          document.getElementById('btn-cancelar-pagina').style.display = 'none';
+          await cargarDemos();
+        } catch (ex) { err.textContent = ex.message || 'No se pudo guardar.'; err.style.display = 'block'; }
+      });
+      document.getElementById('btn-cancelar-pagina').onclick = () => {
+        document.getElementById('form-pagina').reset();
+        document.getElementById('pag-id').value = '';
+        document.getElementById('titulo-form-pagina').textContent = 'Nueva página';
+        document.getElementById('btn-cancelar-pagina').style.display = 'none';
+      };
+    }
 
     /* ----- Verificación del enlace de Google ----- */
     const gInput = document.getElementById('google_link');
@@ -772,20 +891,13 @@ function confirmar(titulo, mensaje, textoBoton) {
       try {
         await crearSolicitud(datos);
         e.target.reset();
-        // B5: re-aplicar el país bloqueado tras el reset (si no, el siguiente
-        // envío guardaría país vacío burlando el required).
-        if (sesionGlobal && sesionGlobal.pais) {
-          const paisSel = document.getElementById('pais');
-          paisSel.value = sesionGlobal.pais;
-          paisSel.disabled = true;
-        }
         gEstado.textContent = ''; gBtn.disabled = true; gUrlValida = null;
         clearTimeout(gPrevTimer); gPrevBox.style.display = 'none'; gPrevImg.removeAttribute('src');
         wEstado.textContent = ''; wPrevBox.style.display = 'none'; wPrevImg.removeAttribute('src');
         wOptSinWeb.disabled = false;
         await pintarLista();
         mostrarPanel('panel-negocios');
-        toast('Solicitud enviada. El equipo de producción la tomará de aquí.');
+        alert('Solicitud enviada. El equipo de producción la tomará de aquí.');
       } catch (ex) {
         err.textContent = ex.message || 'No se pudo enviar.';
         err.style.display = 'block';
@@ -795,55 +907,14 @@ function confirmar(titulo, mensaje, textoBoton) {
 
     function v(id) { return document.getElementById(id).value.trim(); }
 
-    /* Filtros de la lista (búsqueda + estado + país) */
-    let filtroTexto = '', filtroEstado = '', filtroPais = '';
-    document.getElementById('filtro-buscar').addEventListener('input', e => { filtroTexto = e.target.value.toLowerCase(); pintarLista(); });
-    document.getElementById('filtro-estado').addEventListener('change', e => { filtroEstado = e.target.value; pintarLista(); });
-    document.getElementById('filtro-pais').addEventListener('change', e => { filtroPais = e.target.value; pintarLista(); });
-
-    function clasePipeline(estado) {
-      return estado === 'nueva' ? 'pb-nueva' : estado === 'en revisión' ? 'pb-revision'
-        : estado === 'demo lista' ? 'pb-demo' : estado === 'publicada' ? 'pb-publicada'
-        : estado === 'descartada' ? 'pb-descartada' : '';
-    }
-
-    /* Cambiar estado del pipeline (solo director/admin) */
-    window.cambiarEstado = async (id, select) => {
-      const nuevo = select.value;
-      select.disabled = true;
-      try {
-        await cambiarEstadoSolicitud(id, nuevo);
-        toast('Estado actualizado a "' + nuevo + '".');
-        await pintarLista();
-      } catch (e) {
-        toast(e.message || 'No se pudo cambiar el estado.', 'error');
-        select.disabled = false;
-      }
-    };
-
     async function pintarLista(sesion) {
       sesion = sesion || sesionGlobal;
       const lista = document.getElementById('lista');
-      let items = await listarSolicitudes(sesion);
-      // Aplicar filtros en cliente
-      if (filtroTexto) {
-        items = items.filter(s => ((s.nombre_negocio || '') + ' ' + (s.giro || '') + ' ' + (s.telefono || '')).toLowerCase().includes(filtroTexto));
-      }
-      if (filtroEstado) items = items.filter(s => s.estado === filtroEstado);
-      if (filtroPais) items = items.filter(s => s.pais === filtroPais);
-      const puedeMover = sesion && (sesion.rol === 'admin' || sesion.rol === 'director');
+      const items = await listarSolicitudes(sesion);
       if (!items.length) {
-        lista.innerHTML = '<p class="muted">No hay solicitudes con esos filtros. <button class="btn-linea small" onclick="limpiarFiltros()">Limpiar filtros</button></p>';
+        lista.innerHTML = '<p class="muted">Aún no hay solicitudes.</p>';
         return;
       }
-    window.limpiarFiltros = () => {
-      filtroTexto = ''; filtroEstado = ''; filtroPais = '';
-      document.getElementById('filtro-buscar').value = '';
-      document.getElementById('filtro-estado').value = '';
-      document.getElementById('filtro-pais').value = '';
-      pintarLista();
-    };
-
       const etiquetaPaquete = e => e === 'entregado' ? 'entregado ✓' : e === 'en_revision' ? 'en revisión' : 'en generación…';
       lista.innerHTML = items.map(s => {
         const links = [];
@@ -863,7 +934,7 @@ function confirmar(titulo, mensaje, textoBoton) {
         <div class="solicitud">
           <div class="sol-head">
             <strong>${esc(s.nombre_negocio)}</strong>
-            <span class="pipeline-badge ${clasePipeline(s.estado)}">${esc(s.estado)}</span>
+            <span class="estado ${claseEstado}">${esc(s.estado)}</span>
           </div>
           ${s.agente_nombre ? `<div>Agente: <strong>${esc(s.agente_nombre)}</strong></div>` : ''}
           <div class="muted small">${esc(s.giro || '')} · ${esc(s.pais || '')} · ${esc(s.telefono || '')}</div>
@@ -873,12 +944,6 @@ function confirmar(titulo, mensaje, textoBoton) {
           ${links.length ? `<div style="margin-top:6px"><strong class="small">Materiales:</strong> ${links.join(' · ')}</div>` : ''}
           ${s.paquete_estado && s.paquete_estado !== 'pendiente' && s.paquete_estado !== 'entregado' ? `<div class="muted small">Materiales en preparación…</div>` : ''}
           <div class="muted small">${new Date(s.created_at).toLocaleString('es')}</div>
-          ${puedeMover ? `<div style="margin-top:8px;display:flex;gap:8px;align-items:center">
-            <label class="muted small">Estado:</label>
-            <select class="estado-select" onchange="cambiarEstado('${s.id}', this)">
-              ${ESTADOS_SOLICITUD.map(e => `<option value="${e}"${e === s.estado ? ' selected' : ''}>${e}</option>`).join('')}
-            </select>
-          </div>` : ''}
           <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
             ${s.cerrado
               ? `<span class="estado estado-cerrado">✅ Negocio cerrado</span>
@@ -893,21 +958,20 @@ function confirmar(titulo, mensaje, textoBoton) {
 
     /* ----- Cupones ----- */
     window.copiarCupon = async (codigo) => {
-      try { await navigator.clipboard.writeText(codigo); toast('Código copiado: ' + codigo); }
+      try { await navigator.clipboard.writeText(codigo); alert('Código copiado: ' + codigo); }
       catch (e) { window.prompt('Copia el código:', codigo); }
     };
 
     /* ----- Negocio cerrado ----- */
     window.toggleCierre = async (id, cerrado) => {
       const accion = cerrado ? 'marcar este negocio como CERRADO' : 'reabrir este negocio';
-      if (!await confirmar('Confirmar', '¿Seguro que quieres ' + accion + '?', 'Sí')) return;
+      if (!window.confirm(`¿Seguro que quieres ${accion}?`)) return;
       try {
         await marcarCierre(id, cerrado);
         await pintarLista();
         await pintarStats();
-        toast(cerrado ? 'Negocio marcado como cerrado.' : 'Negocio reabierto.');
       } catch (e) {
-        toast(e.message || 'No se pudo actualizar.', 'error');
+        alert(e.message || 'No se pudo actualizar.');
       }
     };
 
@@ -915,252 +979,56 @@ function confirmar(titulo, mensaje, textoBoton) {
     const NIVELES = [30, 35, 40, 45, 50];
     const metaPara = nivel => (nivel - 30) / 5 * 3; // 30→0, 35→3, 40→6, 45→9, 50→12
 
-    async function pintarStats(sesion) {
+    async function pintarStats(sesion, items) {
       sesion = sesion || sesionGlobal;
-      const box = document.getElementById('progreso-nivel');
-      const equipoBox = document.getElementById('lista-equipo');
-      try {
-        const p = await progresoComision(sesion.id);
-        document.getElementById('stat-ventas').textContent = p.ventas;
-        document.getElementById('stat-nivel').textContent = p.nivel + '%';
-        document.getElementById('stats-periodo').textContent =
-          (sesion.rol !== 'agente' ? 'Producción del equipo.' : 'Tu producción y tu nivel de comisión.');
-
-        // Barra de niveles (35/40/50/60/70)
-        document.getElementById('ladder').innerHTML = NIVELES_COMISION.map(n => {
-          const cls = n.pct === p.nivel ? 'nivel actual' : (n.pct < p.nivel ? 'nivel pasado' : 'nivel');
-          return `<div class="${cls}"><span>${n.pct}%</span><small>${esc(n.etiqueta)}</small></div>`;
-        }).join('');
-
-        // Progreso al siguiente nivel
-        if (!p.siguiente) {
-          box.innerHTML = `<div class="aviso">🏆 Estás en el nivel máximo (<strong>70%</strong>). ¡A mantenerlo!</div>`;
-        } else {
-          const pct = Math.min(100, Math.round(p.ventas / p.siguiente.ventas * 100));
-          box.innerHTML =
-            `<p>Nivel actual: <strong style="color:#2ECC71">${p.nivel}%</strong> · ` +
-            `Ventas: <strong>${p.ventas} de ${p.siguiente.ventas}</strong></p>` +
-            `<div class="progreso"><div class="progreso-barra" style="width:${pct}%"></div></div>` +
-            `<p class="muted">${esc(p.detalle)}</p>`;
-        }
-
-        // Equipo / reclutas
-        equipoBox.innerHTML = p.reclutas.length ? p.reclutas.map(r => {
-          const ok = r.ventas >= 3;
-          return `<div class="solicitud"><div class="sol-head"><strong>${esc(r.nombre)}</strong>` +
-            `<span class="pipeline-badge ${ok ? 'pb-publicada' : 'pb-revision'}">${r.ventas}/3 ventas ${ok ? '✓' : ''}</span></div></div>`;
-        }).join('') : '<p class="muted">Aún no tienes personas en tu equipo. Invítalas desde la sección Agentes.</p>';
-      } catch (e) {
-        box.innerHTML = '<p class="muted">No se pudo cargar tu progreso.</p>';
-        equipoBox.innerHTML = '';
-      }
-    }
-
-    /* ----- Demos: galería por país + CRUD (admin/director) ----- */
-    let _demosPaisFiltro = '';
-    let _demosPaisesCache = [];
-
-    async function pintarDemos(sesion) {
-      sesion = sesion || sesionGlobal;
-      const esAdm = sesion.rol === 'admin' || sesion.rol === 'director';
-      document.getElementById('demos-admin-bar').style.display = esAdm ? 'flex' : 'none';
-      const grid = document.getElementById('demos-grid');
-      const filtros = document.getElementById('demos-filtros');
-      try {
-        _demosPaisesCache = await listarPaisesDemo();
-        if (_demosPaisFiltro && !_demosPaisesCache.some(p => p.id === _demosPaisFiltro)) _demosPaisFiltro = '';
-        filtros.innerHTML =
-          `<button class="btn-linea small${!_demosPaisFiltro ? ' activo' : ''}" data-pais="">Todos</button>` +
-          _demosPaisesCache.map(p =>
-            `<button class="btn-linea small${_demosPaisFiltro === p.id ? ' activo' : ''}" data-pais="${p.id}">${esc(p.nombre)}</button>`
-          ).join('');
-        filtros.querySelectorAll('button').forEach(b => {
-          b.onclick = () => { _demosPaisFiltro = b.dataset.pais; pintarDemos(sesion); };
-        });
-        const demos = await listarDemos(_demosPaisFiltro || undefined);
-        /* Demos automáticos: los "Ver demo" de las solicitudes (conectado a la página principal) */
-        let demosSol = [];
-        try {
-          const sols = await listarSolicitudes(sesion);
-          demosSol = sols.filter(s => s.demo_url);
-          if (_demosPaisFiltro) {
-            const pSel = _demosPaisesCache.find(x => x.id === _demosPaisFiltro);
-            const nombreSel = pSel ? pSel.nombre : '';
-            demosSol = demosSol.filter(s => (s.pais || '') === nombreSel);
-          }
-        } catch (e) { demosSol = []; }
-        const paisNombre = id => {
-          const p = _demosPaisesCache.find(x => x.id === id);
-          return p ? p.nombre : '';
-        };
-        const tarjetasManuales = demos.map(d => `
-          <div class="demo-card">
-            ${d.imagen_url ? `<img class="demo-img" src="${esc(d.imagen_url)}" alt="${esc(d.titulo)}" loading="lazy" onerror="this.style.display='none'">` : '<div class="demo-img demo-img-vacia">🎬</div>'}
-            <div class="demo-cuerpo">
-              <span class="demo-pais">${esc(d.pais_nombre || paisNombre(d.pais_id))}</span>
-              <strong class="demo-titulo">${esc(d.titulo)}</strong>
-              ${d.descripcion ? `<p class="muted small">${esc(d.descripcion)}</p>` : ''}
-              <div class="demo-acciones">
-                <a class="btn-dorado small" href="${esc(d.url)}" target="_blank" rel="noopener">Ver demo</a>
-                ${esAdm ? `<button class="btn-linea small" onclick="editarDemoUI('${d.id}')">Editar</button>
-                <button class="btn-linea small" onclick="eliminarDemoUI('${d.id}', '${esc(d.titulo).replace(/'/g, "\\'")}')">Borrar</button>` : ''}
-              </div>
-            </div>
-          </div>`);
-        const tarjetasSol = demosSol.map(s => `
-          <div class="demo-card">
-            <div class="demo-img demo-img-vacia">🏢</div>
-            <div class="demo-cuerpo">
-              <span class="demo-pais">${esc(s.pais || '')} · de solicitud</span>
-              <strong class="demo-titulo">${esc(s.nombre_negocio || 'Sin nombre')}</strong>
-              ${s.giro ? `<p class="muted small">${esc(s.giro)}</p>` : ''}
-              <div class="demo-acciones">
-                <a class="btn-dorado small" href="${esc(s.demo_url)}" target="_blank" rel="noopener">Ver demo</a>
-              </div>
-            </div>
-          </div>`);
-        grid.innerHTML = (tarjetasManuales.length || tarjetasSol.length)
-          ? tarjetasManuales.join('') + tarjetasSol.join('')
-          : '<p class="muted">Aún no hay demos aquí.' + (esAdm ? ' Agrega el primero con "＋ Agregar demo".' : '') + '</p>';
-      } catch (e) {
-        grid.innerHTML = '<p class="muted">No se pudieron cargar los demos.</p>';
-      }
-    }
-
-    function modalFormulario(titulo, campos, textoBoton) {
-      return new Promise(resolve => {
-        const fondo = document.createElement('div');
-        fondo.className = 'modal-fondo';
-        fondo.innerHTML =
-          '<div class="modal-caja"><h3>' + esc(titulo) + '</h3>' +
-          campos.map(c =>
-            `<label style="display:block;margin-bottom:10px">${esc(c.etiqueta)}${c.req ? ' *' : ''}` +
-            (c.tipo === 'select'
-              ? `<select id="mf-${c.id}" style="width:100%;margin-top:4px">${c.opciones.map(o => `<option value="${esc(o.valor)}"${o.sel ? ' selected' : ''}>${esc(o.texto)}</option>`).join('')}</select>`
-              : c.tipo === 'textarea'
-              ? `<textarea id="mf-${c.id}" rows="2" style="width:100%;margin-top:4px">${esc(c.valor || '')}</textarea>`
-              : `<input id="mf-${c.id}" type="${c.tipo || 'text'}" value="${esc(c.valor || '')}" placeholder="${esc(c.ph || '')}" style="width:100%;margin-top:4px">`) +
-            '</label>'
-          ).join('') +
-          '<div id="mf-error" class="error" style="display:none;margin-bottom:10px"></div>' +
-          '<div class="modal-botones"><button class="btn-linea" id="mf-cancel">Cancelar</button>' +
-          '<button class="btn-dorado" id="mf-ok">' + esc(textoBoton || 'Guardar') + '</button></div></div>';
-        document.body.appendChild(fondo);
-        const cerrar = v => { fondo.remove(); resolve(v); };
-        fondo.querySelector('#mf-cancel').onclick = () => cerrar(null);
-        fondo.addEventListener('click', e => { if (e.target === fondo) cerrar(null); });
-        fondo.querySelector('#mf-ok').onclick = () => {
-          const vals = {};
-          campos.forEach(c => { vals[c.id] = document.getElementById('mf-' + c.id).value; });
-          cerrar(vals);
-        };
-      });
-    }
-
-    async function demoFormUI(demo) {
-      const paises = _demosPaisesCache.length ? _demosPaisesCache : await listarPaisesDemo();
-      if (!paises.length) { toast('Primero crea un país con "⚙️ Países".', 'error'); return; }
-      const vals = await modalFormulario(demo ? 'Editar demo' : 'Agregar demo', [
-        { id: 'titulo', etiqueta: 'Título', req: 1, valor: demo?.titulo, ph: 'Ej. Restaurante mexicano' },
-        { id: 'url', etiqueta: 'URL del demo', req: 1, valor: demo?.url, ph: 'https://…' },
-        { id: 'pais_id', etiqueta: 'País', tipo: 'select', req: 1,
-          opciones: paises.map(p => ({ valor: p.id, texto: p.nombre, sel: (demo ? demo.pais_id : _demosPaisFiltro) === p.id })) },
-        { id: 'descripcion', etiqueta: 'Descripción', tipo: 'textarea', valor: demo?.descripcion, ph: 'Qué muestra este demo…' },
-        { id: 'imagen_url', etiqueta: 'URL de imagen (miniatura)', valor: demo?.imagen_url, ph: 'https://… (opcional)' }
-      ], demo ? 'Guardar' : 'Agregar');
-      if (!vals) return;
-      try {
-        if (demo) await editarDemo(demo.id, vals); else await crearDemo(vals);
-        toast(demo ? 'Demo actualizado.' : 'Demo agregado.');
-        await pintarDemos();
-      } catch (ex) {
-        toast(ex.message || 'No se pudo guardar.', 'error');
-      }
-    }
-
-    window.editarDemoUI = async (id) => {
-      try {
-        const demos = await listarDemos();
-        const d = demos.find(x => x.id === id);
-        if (!d) { toast('Demo no encontrado.', 'error'); return; }
-        await demoFormUI(d);
-      } catch (e) { toast('No se pudo cargar.', 'error'); }
-    };
-
-    window.eliminarDemoUI = async (id, titulo) => {
-      if (!await confirmar('Borrar demo', '¿Borrar "' + titulo + '"? Esta acción no se puede deshacer.', 'Borrar')) return;
-      try {
-        await eliminarDemo(id);
-        toast('Demo borrado.');
-        await pintarDemos();
-      } catch (ex) { toast(ex.message || 'No se pudo borrar.', 'error'); }
-    };
-
-    document.getElementById('btn-nuevo-demo').onclick = () => demoFormUI(null);
-
-    /* Gestión de países (secciones) */
-    document.getElementById('btn-gestionar-paises').onclick = async () => {
-      const fondo = document.createElement('div');
-      fondo.className = 'modal-fondo';
-      const dibujar = async () => {
-        let paises = [];
-        try { paises = await listarTodosPaisesDemo(); } catch (e) { paises = []; }
-        fondo.querySelector('#mp-lista').innerHTML = paises.length ? paises.map(p => `
-          <div class="solicitud" style="margin-bottom:8px">
-            <div class="sol-head"><strong>${esc(p.nombre)}</strong>
-              <span class="muted small">${p.activo ? 'visible' : 'oculto'}</span></div>
-            <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn-linea small" data-act="ren" data-id="${p.id}">Renombrar</button>
-              <button class="btn-linea small" data-act="tog" data-id="${p.id}">${p.activo ? 'Ocultar' : 'Mostrar'}</button>
-              <button class="btn-linea small" data-act="del" data-id="${p.id}">Borrar</button>
-            </div>
-          </div>`).join('') : '<p class="muted">No hay países.</p>';
-        fondo.querySelectorAll('#mp-lista button').forEach(b => {
-          b.onclick = async () => {
-            const id = b.dataset.id, act = b.dataset.act;
-            try {
-              if (act === 'del') {
-                const p = paises.find(x => x.id === id);
-                const nDemos = (await listarDemos(id)).length;
-                if (!await confirmar('Borrar país', '¿Borrar "' + (p ? p.nombre : '') + '"?' + (nDemos ? ` También se borrarán sus ${nDemos} demo(s).` : '') + ' No se puede deshacer.', 'Borrar')) return;
-                await eliminarPaisDemo(id);
-                toast('País borrado.');
-              } else if (act === 'tog') {
-                const p = paises.find(x => x.id === id);
-                await editarPaisDemo(id, { activo: !p.activo });
-              } else if (act === 'ren') {
-                const p = paises.find(x => x.id === id);
-                const vals = await modalFormulario('Renombrar país', [{ id: 'nombre', etiqueta: 'Nombre', req: 1, valor: p.nombre }], 'Guardar');
-                if (!vals) return;
-                await editarPaisDemo(id, { nombre: vals.nombre });
-              }
-              await dibujar();
-              await pintarDemos();
-            } catch (ex) { toast(ex.message || 'No se pudo completar.', 'error'); }
-          };
-        });
+      if (!items) items = await listarSolicitudes(sesion);
+      const ahora = new Date();
+      const esEsteMes = f => {
+        if (!f) return false;
+        const d = new Date(f);
+        return d.getFullYear() === ahora.getFullYear() && d.getMonth() === ahora.getMonth();
       };
-      fondo.innerHTML =
-        '<div class="modal-caja"><h3>Países</h3>' +
-        '<div id="mp-lista" style="max-height:40vh;overflow:auto;margin-bottom:12px"></div>' +
-        '<div style="display:flex;gap:8px;margin-bottom:16px"><input id="mp-nuevo" placeholder="Nuevo país…" style="flex:1">' +
-        '<button class="btn-dorado" id="mp-agregar">Agregar</button></div>' +
-        '<div class="modal-botones"><button class="btn-linea" id="mp-cerrar">Cerrar</button></div></div>';
-      document.body.appendChild(fondo);
-      fondo.querySelector('#mp-cerrar').onclick = () => fondo.remove();
-      fondo.addEventListener('click', e => { if (e.target === fondo) fondo.remove(); });
-      fondo.querySelector('#mp-agregar').onclick = async () => {
-        const nombre = fondo.querySelector('#mp-nuevo').value;
-        try {
-          await crearPaisDemo(nombre);
-          fondo.querySelector('#mp-nuevo').value = '';
-          toast('País agregado.');
-          await dibujar();
-          await pintarDemos();
-        } catch (ex) { toast(ex.message || 'No se pudo agregar.', 'error'); }
-      };
-      await dibujar();
-    };
+      const cerradosMes = items.filter(s => s.cerrado && esEsteMes(s.cerrado_en));
+      const mesNombre = ahora.toLocaleString('es', { month: 'long' });
+
+      document.getElementById('stat-pedidos').textContent = items.length;
+      document.getElementById('stat-cerrados').textContent = cerradosMes.length;
+      document.getElementById('stats-periodo').textContent =
+        (sesion && sesion.rol !== 'agente' ? 'Producción del equipo en ' : 'Tu producción en ') + mesNombre + '.';
+
+      // Nivel actual según la comisión del agente
+      let comision = sesion && sesion.comision_pct != null ? Number(sesion.comision_pct) : 30;
+      let nivelActual = 30;
+      for (const n of NIVELES) { if (comision >= n) nivelActual = n; }
+      const idx = NIVELES.indexOf(nivelActual);
+      const esMaximo = idx === NIVELES.length - 1;
+
+      // Barra de niveles
+      document.getElementById('ladder').innerHTML = NIVELES.map(n => {
+        const cls = n === nivelActual ? 'nivel actual' : (n < nivelActual ? 'nivel pasado' : 'nivel');
+        return `<div class="${cls}"><span>${n}%</span><small>${metaPara(n)} <span class="muted">neg.</span></small></div>`;
+      }).join('');
+
+      // Progreso al siguiente nivel
+      let info;
+      if (sesion && sesion.rol !== 'agente') {
+        info = `El equipo lleva <strong>${cerradosMes.length}</strong> negocios cerrados en ${mesNombre}.`;
+      } else if (esMaximo) {
+        info = `🏆 Estás en el nivel máximo (<strong>50%</strong>) con <strong>${cerradosMes.length}</strong> negocios cerrados en ${mesNombre}. ¡A mantenerlo!`;
+      } else {
+        const sig = NIVELES[idx + 1];
+        const meta = metaPara(sig);
+        const faltan = Math.max(0, meta - cerradosMes.length);
+        const pct = Math.min(100, Math.round(cerradosMes.length / meta * 100));
+        info = `Nivel actual: <strong style="color:#2ECC71">${nivelActual}%</strong> · ` +
+          `Cerrados en ${mesNombre}: <strong>${cerradosMes.length} de ${meta}</strong><br>` +
+          `<div class="progreso"><div class="progreso-barra" style="width:${pct}%"></div></div>` +
+          (faltan > 0
+            ? `Te faltan <strong>${faltan}</strong> negocio${faltan === 1 ? '' : 's'} para subir al <strong>${sig}%</strong>.`
+            : `🎉 ¡Meta cumplida! Subes al <strong>${sig}%</strong>.`);
+      }
+      document.getElementById('ladder-info').innerHTML = info;
+    }
   })();
 </script>
 </body>
