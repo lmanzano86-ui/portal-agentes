@@ -296,7 +296,7 @@
     <section class="panel" id="panel-demos" style="display:none">
       <h2>🎬 Demos</h2>
       <p class="muted">Secciones por país y páginas de «Mis páginas» y de la página principal. Los cambios se publican al instante.</p>
-      <h3>Secciones de países</h3>
+      <h3>Secciones y sus páginas</h3>
       <div id="lista-secciones" class="lista"></div>
       <h3 id="titulo-form-seccion">Nueva sección</h3>
       <form id="form-seccion">
@@ -323,8 +323,6 @@
           <button type="button" class="btn-linea" id="btn-cancelar-seccion" style="display:none">Cancelar</button>
         </div>
       </form>
-      <h3 style="margin-top:28px">Páginas</h3>
-      <div id="lista-paginas" class="lista"></div>
       <h3 id="titulo-form-pagina">Nueva página</h3>
       <form id="form-pagina">
         <input type="hidden" id="pag-id">
@@ -635,33 +633,41 @@
     function pintarDemos() {
       const ls = document.getElementById('lista-secciones');
       ls.innerHTML = _secciones.length ? _secciones.map(s => {
-        const n = _paginas.filter(p => p.seccion_id === s.id).length;
-        return `<div class="solicitud"><div class="sol-head"><strong>${esc(s.bandera || '')} ${esc(s.nombre)}</strong>`
-          + `<span class="muted small">${n} página(s) · orden ${s.orden}</span></div>`
+        const ps = _paginas.filter(p => p.seccion_id === s.id);
+        const paginasHtml = ps.length ? ps.map(p =>
+          `<div class="solicitud" style="margin-top:8px">`
+          + `<div class="sol-head"><strong>${esc(p.titulo)}</strong>`
+          + `<span style="display:flex;gap:6px">`
+          + `<button class="btn-linea small" onclick="editarPagina('${p.id}')">Editar</button>`
+          + `<button class="btn-linea small" style="color:#c0392b" onclick="eliminarPagina('${p.id}')">Quitar</button>`
+          + `</span></div>`
+          + `<div class="muted small">${esc(p.tag || '')} · <a href="${esc(p.url)}" target="_blank" rel="noopener" style="color:var(--dorado-claro);word-break:break-all">${esc(p.url)}</a></div>`
+          + (p.descripcion ? `<div class="muted small">${esc(p.descripcion)}</div>` : '')
+          + `</div>`
+        ).join('') : '<p class="muted small" style="margin-top:8px">Sin páginas en esta sección.</p>';
+        return `<div class="tarjeta" style="margin-bottom:16px">`
+          + `<div class="sol-head"><strong style="font-size:17px">${esc(s.bandera || '')} ${esc(s.nombre)}</strong>`
+          + `<span class="muted small">${ps.length} página(s) · orden ${s.orden}</span></div>`
           + `<div class="muted small">slug: ${esc(s.slug)}</div>`
-          + `<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">`
-          + `<button class="btn-linea" onclick="editarSeccion('${s.id}')">Editar</button>`
-          + `<button class="btn-linea" style="color:#c0392b" onclick="eliminarSeccion('${s.id}')">Eliminar</button>`
-          + `</div></div>`;
+          + `<div style="margin:8px 0;display:flex;gap:8px;flex-wrap:wrap">`
+          + `<button class="btn-linea small" onclick="editarSeccion('${s.id}')">Editar sección</button>`
+          + `<button class="btn-linea small" style="color:#c0392b" onclick="eliminarSeccion('${s.id}')">Eliminar sección</button>`
+          + `<button class="btn-linea small" onclick="nuevaPaginaEn('${s.id}')">+ Agregar página aquí</button>`
+          + `</div>`
+          + `<div style="margin-top:6px"><div class="muted small" style="font-weight:700;margin-bottom:4px">Páginas actuales:</div>${paginasHtml}</div>`
+          + `</div>`;
       }).join('') : '<p class="muted">No hay secciones.</p>';
       document.getElementById('pag-seccion').innerHTML =
         _secciones.map(s => `<option value="${s.id}">${esc((s.bandera || '') + ' ' + s.nombre)}</option>`).join('');
-      const lp = document.getElementById('lista-paginas');
-      const html = _secciones.map(s => {
-        const ps = _paginas.filter(p => p.seccion_id === s.id);
-        if (!ps.length) return '';
-        return `<h4 style="margin:14px 0 6px">${esc((s.bandera || '') + ' ' + s.nombre)}</h4>` + ps.map(p =>
-          `<div class="solicitud"><div class="sol-head"><strong>${esc(p.titulo)}</strong></div>`
-          + `<div class="muted small">${esc(p.tag || '')} · <a href="${esc(p.url)}" target="_blank" rel="noopener" style="color:var(--dorado-claro);word-break:break-all">${esc(p.url)}</a></div>`
-          + (p.descripcion ? `<div class="muted small">${esc(p.descripcion)}</div>` : '')
-          + `<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">`
-          + `<button class="btn-linea" onclick="editarPagina('${p.id}')">Editar</button>`
-          + `<button class="btn-linea" style="color:#c0392b" onclick="eliminarPagina('${p.id}')">Eliminar</button>`
-          + `</div></div>`
-        ).join('');
-      }).join('');
-      lp.innerHTML = html || '<p class="muted">No hay páginas.</p>';
     }
+    window.nuevaPaginaEn = (seccionId) => {
+      document.getElementById('form-pagina').reset();
+      document.getElementById('pag-id').value = '';
+      document.getElementById('pag-seccion').value = seccionId;
+      document.getElementById('titulo-form-pagina').textContent = 'Nueva página';
+      document.getElementById('btn-cancelar-pagina').style.display = 'none';
+      window.scrollTo(0, document.getElementById('titulo-form-pagina').offsetTop);
+    };
     window.editarSeccion = (id) => {
       const s = _secciones.find(x => x.id === id);
       if (!s) return;
