@@ -39,13 +39,13 @@ create policy "admin gestiona demo_paginas" on public.demo_paginas for all using
 -- Usuario de automatización (scripts de Doky: agregar demos al publicar).
 -- uuid: 1f2fc50d-ee2e-4ee8-8aa5-058272324bf8
 drop policy if exists "auto insert demo_secciones" on public.demo_secciones;
-create policy "auto insert demo_secciones" on public.demo_secciones for insert using (auth.uid() = '1f2fc50d-ee2e-4ee8-8aa5-058272324bf8') with check (auth.uid() = '1f2fc50d-ee2e-4ee8-8aa5-058272324bf8');
+create policy "auto insert demo_secciones" on public.demo_secciones for insert with check (auth.uid() = '1f2fc50d-ee2e-4ee8-8aa5-058272324bf8');
 drop policy if exists "auto update demo_secciones" on public.demo_secciones;
 create policy "auto update demo_secciones" on public.demo_secciones for update using (auth.uid() = '1f2fc50d-ee2e-4ee8-8aa5-058272324bf8') with check (auth.uid() = '1f2fc50d-ee2e-4ee8-8aa5-058272324bf8');
 drop policy if exists "auto delete demo_secciones" on public.demo_secciones;
 create policy "auto delete demo_secciones" on public.demo_secciones for delete using (auth.uid() = '1f2fc50d-ee2e-4ee8-8aa5-058272324bf8') with check (auth.uid() = '1f2fc50d-ee2e-4ee8-8aa5-058272324bf8');
 drop policy if exists "auto insert demo_paginas" on public.demo_paginas;
-create policy "auto insert demo_paginas" on public.demo_paginas for insert using (auth.uid() = '1f2fc50d-ee2e-4ee8-8aa5-058272324bf8') with check (auth.uid() = '1f2fc50d-ee2e-4ee8-8aa5-058272324bf8');
+create policy "auto insert demo_paginas" on public.demo_paginas for insert with check (auth.uid() = '1f2fc50d-ee2e-4ee8-8aa5-058272324bf8');
 drop policy if exists "auto update demo_paginas" on public.demo_paginas;
 create policy "auto update demo_paginas" on public.demo_paginas for update using (auth.uid() = '1f2fc50d-ee2e-4ee8-8aa5-058272324bf8') with check (auth.uid() = '1f2fc50d-ee2e-4ee8-8aa5-058272324bf8');
 drop policy if exists "auto delete demo_paginas" on public.demo_paginas;
