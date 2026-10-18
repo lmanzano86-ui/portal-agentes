@@ -393,8 +393,17 @@
       initFormDemos();
       try { await cargarDemos(); }
       catch (e) {
+        const det = String((e && e.message) || e || '').slice(0, 300);
         document.getElementById('lista-secciones').innerHTML =
-          '<p class="muted">No se pudieron cargar las demos. Si es la primera vez, corre la migración <b>migracion-2026-10-18-demos.sql</b> en el editor SQL de Supabase.</p>';
+          '<div class="error"><b>No se pudieron cargar las demos.</b>'
+          + (det ? '<br><span class="small">Detalle: ' + det.replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c])) + '</span>' : '')
+          + '<br><br><button class="btn-linea" id="btn-reintentar-demos">Reintentar</button></div>'
+          + '<p class="muted small" style="margin-top:8px">Si el error persiste, avísame con el detalle de arriba. Si es la primera vez, corre la migración <b>migracion-2026-10-18-demos.sql</b> en el editor SQL de Supabase.</p>';
+        document.getElementById('btn-reintentar-demos').onclick = async () => {
+          document.getElementById('lista-secciones').innerHTML = '<p class="muted">Cargando…</p>';
+          try { await cargarDemos(); }
+          catch (e2) { document.getElementById('lista-secciones').innerHTML = '<div class="error"><b>Sigue fallando.</b><br><span class="small">Detalle: ' + String((e2 && e2.message) || e2 || '').slice(0, 300) + '</span><br><br><button class="btn-linea" onclick="window.location.reload()">Recargar página</button></div>'; }
+        };
       }
     } else {
       document.getElementById('subtitulo-lista').style.display = 'block';
