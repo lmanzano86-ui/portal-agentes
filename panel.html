@@ -415,6 +415,10 @@
       document.getElementById('subtitulo-lista').style.display = 'block';
     }
     document.getElementById('btn-salir').onclick = async () => { await salir(); window.location.href = 'index.html'; };
+    /* NIVELES y metaPara: declarados antes de usarse (pintarStats los necesita en la línea 421).
+       Si van después, JS lanza "Cannot access before initialization" y los botones nunca se activan. */
+    const NIVELES = [30, 35, 40, 45, 50];
+    const metaPara = nivel => (nivel - 30) / 5 * 3; // 30→0, 35→3, 40→6, 45→9, 50→12
     const items = await pintarLista(sesion);
     await pintarStats(sesion, items);
 
@@ -1022,9 +1026,6 @@
     };
 
     /* ----- Estadísticas y escalera de comisión ----- */
-    const NIVELES = [30, 35, 40, 45, 50];
-    const metaPara = nivel => (nivel - 30) / 5 * 3; // 30→0, 35→3, 40→6, 45→9, 50→12
-
     async function pintarStats(sesion, items) {
       sesion = sesion || sesionGlobal;
       if (!items) items = await listarSolicitudes(sesion);
