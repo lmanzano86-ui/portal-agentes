@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Panel del Agente — New Age Professional Services</title>
 <link rel="stylesheet" href="css/estilos.css">
+<script src="js/tema.js"></script>
 </head>
 <body>
 <div class="layout">
@@ -22,6 +23,7 @@
       <button class="nav-item" data-panel="panel-agentes" id="nav-agentes" style="display:none">👥 Agentes</button>
       <button class="nav-item" data-panel="panel-sistema" id="nav-sistema" style="display:none">⚙️ Usuarios de sistema</button>
       <button class="nav-item" data-panel="panel-demos" id="nav-demos" style="display:none">🎬 Demos</button>
+      <button class="nav-item" data-panel="panel-diseno" id="nav-diseno" style="display:none">🎨 Diseño</button>
     </nav>
     <div class="sidebar-user">
       <div class="sidebar-nombre" id="nombre-agente"></div>
@@ -351,6 +353,14 @@
       </form>
       <p class="muted small" style="margin-top:16px">En público solo se muestran las páginas con estado «Hecho» y visibles. «🚫 Ocultar» la quita del frente sin borrarla. Al eliminar una página solo se quita su tarjeta del panel — el repositorio del demo en GitHub se conserva.</p>
     </section>
+
+    <section class="panel" id="panel-diseno" style="display:none">
+      <h2>🎨 Diseño del portal</h2>
+      <p class="muted">Plantillas de diseño del portal. Activa una para aplicarla al instante en todo el portal (login, panel y páginas públicas). Solo visible para ti.</p>
+      <div id="lista-temas" class="lista"></div>
+      <div id="error-temas" class="error" style="display:none"></div>
+      <p class="muted small" style="margin-top:16px">Cuando se cree un diseño nuevo, se agregará aquí como plantilla automáticamente.</p>
+    </section>
   </main>
 </div>
 
@@ -396,6 +406,7 @@
     let _secciones = [], _paginas = []; // estado de Demos: declarar antes de cargar
     if (esAdminTotal(sesion)) {
       document.getElementById('nav-demos').style.display = 'flex';
+      document.getElementById('nav-diseno').style.display = 'flex';
       initFormDemos();
       try { await cargarDemos(); }
       catch (e) {
@@ -410,6 +421,11 @@
           try { await cargarDemos(); }
           catch (e2) { document.getElementById('lista-secciones').innerHTML = '<div class="error"><b>Sigue fallando.</b><br><span class="small">Detalle: ' + String((e2 && e2.message) || e2 || '').slice(0, 300) + '</span><br><br><button class="btn-linea" onclick="window.location.reload()">Recargar página</button></div>'; }
         };
+      }
+      try { await cargarTemas(); }
+      catch (e) {
+        document.getElementById('error-temas').style.display = 'block';
+        document.getElementById('error-temas').textContent = 'No se pudieron cargar los diseños. Si es la primera vez, corre la migración migracion-2026-10-19-portal-temas.sql en el editor SQL de Supabase.';
       }
     } else {
       document.getElementById('subtitulo-lista').style.display = 'block';
@@ -648,6 +664,37 @@
       _paginas = pags.data || [];
       pintarDemos();
     }
+    /* ---------- Temas / plantillas de diseño ---------- */
+    async function cargarTemas() {
+      const { data, error } = await supa.from('portal_temas').select('id,nombre,descripcion,activo').order('nombre');
+      const errEl = document.getElementById('error-temas');
+      if (error) { errEl.style.display = 'block'; errEl.textContent = 'No se pudieron cargar los diseños: ' + error.message; return; }
+      errEl.style.display = 'none';
+      document.getElementById('lista-temas').innerHTML = (data || []).map(t =>
+        '<div class="solicitud"><div class="sol-head"><div><b>' + esc(t.nombre) + '</b><br>' +
+        '<span class="muted small">' + esc(t.descripcion || '') + '</span></div>' +
+        (t.activo
+          ? '<span class="estado estado-verde">✅ Activo</span>'
+          : '<button class="btn-linea small" onclick="activarTema(\'' + t.id.replace(/'/g, "\\'") + '\')">Activar</button>') +
+        '</div></div>'
+      ).join('') || '<p class="muted">No hay diseños registrados.</p>';
+    }
+    window.activarTema = async (id) => {
+      if (!window.confirm('¿Activar el diseño seleccionado en todo el portal?')) return;
+      const errEl = document.getElementById('error-temas');
+      try {
+        const off = await supa.from('portal_temas').update({ activo: false }).eq('activo', true);
+        if (off.error) throw off.error;
+        const on = await supa.from('portal_temas').update({ activo: true }).eq('id', id);
+        if (on.error) throw on.error;
+        try { localStorage.removeItem('portal_tema_id'); localStorage.removeItem('portal_tema_css'); } catch (e) {}
+        await cargarTemas();
+        window.location.reload();
+      } catch (e) {
+        errEl.style.display = 'block';
+        errEl.textContent = 'No se pudo activar: ' + String((e && e.message) || e);
+      }
+    };
     function badgeEstado(est) {
       const mapa = {
         terminado: ['estado-verde', '✅ Hecho'],

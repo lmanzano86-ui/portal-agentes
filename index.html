@@ -4,10 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Agent Login — New Age Professional Services</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/estilos.css">
+<script src="js/tema.js"></script>
 </head>
 <body>
 <div class="login-wrap">
@@ -30,7 +28,6 @@
       <button type="submit" class="btn-dorado" id="btn-entrar">Entrar</button>
     </form>
     <p class="muted small">Si eres agente y no tienes cuenta, pídele tu enlace de invitación a tu director.</p>
-    <p class="muted small"><a href="#" id="link-recuperar" style="color:var(--dorado-claro)">¿Olvidaste tu contraseña?</a></p>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -55,17 +52,6 @@
       err.style.display = 'block';
       btn.disabled = false; btn.textContent = 'Entrar';
     }
-  });
-  document.getElementById('link-recuperar').addEventListener('click', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('email').value.trim();
-    const err = document.getElementById('error');
-    err.style.display = 'none';
-    try {
-      await recuperarPassword(email);
-    } catch (ex) {}
-    err.textContent = 'Si el correo está registrado, recibirás un enlace de recuperación.';
-    err.style.display = 'block';
   });
 </script>
 </body>
