@@ -666,18 +666,22 @@
     }
     /* ---------- Temas / plantillas de diseño ---------- */
     async function cargarTemas() {
-      const { data, error } = await supa.from('portal_temas').select('id,nombre,descripcion,activo').order('nombre');
+      const { data, error } = await supa.from('portal_temas').select('id,nombre,descripcion,activo,preview_url').order('nombre');
       const errEl = document.getElementById('error-temas');
       if (error) { errEl.style.display = 'block'; errEl.textContent = 'No se pudieron cargar los diseños: ' + error.message; return; }
       errEl.style.display = 'none';
-      document.getElementById('lista-temas').innerHTML = (data || []).map(t =>
-        '<div class="solicitud"><div class="sol-head"><div><b>' + esc(t.nombre) + '</b><br>' +
-        '<span class="muted small">' + esc(t.descripcion || '') + '</span></div>' +
+      document.getElementById('lista-temas').innerHTML = (data || []).map(t => {
+        const prev = t.preview_url
+          ? '<img src="' + esc(t.preview_url) + '" alt="Vista previa" style="width:120px;border-radius:10px;border:1px solid var(--line);flex-shrink:0">'
+          : '';
+        return '<div class="solicitud"><div class="sol-head" style="align-items:flex-start"><div style="display:flex;gap:12px;align-items:flex-start">' + prev +
+        '<div><b>' + esc(t.nombre) + '</b><br>' +
+        '<span class="muted small">' + esc(t.descripcion || '') + '</span></div></div>' +
         (t.activo
           ? '<span class="estado estado-verde">✅ Activo</span>'
           : '<button class="btn-linea small" onclick="activarTema(\'' + t.id.replace(/'/g, "\\'") + '\')">Activar</button>') +
-        '</div></div>'
-      ).join('') || '<p class="muted">No hay diseños registrados.</p>';
+        '</div></div>';
+      }).join('') || '<p class="muted">No hay diseños registrados.</p>';
     }
     window.activarTema = async (id) => {
       if (!window.confirm('¿Activar el diseño seleccionado en todo el portal?')) return;
