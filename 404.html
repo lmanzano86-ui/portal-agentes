@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Portal de agentes — Nueva dirección</title>
+<script>
+var partes = window.location.pathname.split('/portal-agentes/');
+var resto = partes.length > 1 ? partes.slice(1).join('/portal-agentes/') : '';
+window.location.replace('https://lmanzano86-ui.github.io/paginas-web/portal-agentes/' + resto + window.location.search + window.location.hash);
+</script>
+</head>
+<body style="font-family:Arial,sans-serif;background:#0f0e0c;color:#f3e8d3;text-align:center;padding:60px 20px">
+<p>El Portal de agentes se mudó. Te estamos redirigiendo…</p>
+<p><a style="color:#d4af37" href="https://lmanzano86-ui.github.io/paginas-web/portal-agentes/">Entrar al portal en su nueva dirección</a></p>
+</body>
+</html>
